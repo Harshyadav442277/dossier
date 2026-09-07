@@ -37,8 +37,7 @@ is the whole interface. The language, region and section are read from the sente
 claude mcp add --transport http dossier https://dossier-wukong4.vercel.app/api/mcp
 ```
 
-- **Telegram**: talk to the bot the operator registers (`npm run telegram:setup` after setting
-  `TELEGRAM_BOT_TOKEN`). `/research <link> [in Hindi]`, `/news <topic>`, `/safe <link, wallet or
+- **Telegram**: <https://t.me/My_Dossier_bot>. `/research <link> [in Hindi]`, `/news <topic>`, `/safe <link, wallet or
   message>`, or just paste; one message shows progress per question, then the summary and the
   share link.
 

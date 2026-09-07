@@ -50,7 +50,7 @@ brackets from `/ledger` at posting time; never round a number up. One live dossi
 > in Telegram, paste the message your uncle forwarded and watch the checks come in one by one.
 >
 > `claude mcp add --transport http dossier https://dossier-wukong4.vercel.app/api/mcp`
-> Bot: @[handle]
+> Bot: @My_Dossier_bot
 
 ## Replies worth having ready
 
