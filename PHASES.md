@@ -32,7 +32,7 @@ accept-list and a reader. Typecheck clean; `next build` clean.
 ## Phase 3 — Ship — mostly done, 2026-09-06 ~10:30 UTC
 
 Done: wallet funded (55 USDC), preflight clean, paid news dossier 4/4, two paid research
-dossiers through the UI, repo pushed to `github.com/0xsaroj001/dossier`, production deployed at
+dossiers through the UI, repo pushed to `github.com/Harshyadav442277/dossier`, production deployed at
 <https://dossier-wukong4.vercel.app> with budget, caps, salt and `PUBLIC_URL` set, SSO protection
 off, free judge journey 8/8 against production.
 

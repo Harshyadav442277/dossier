@@ -46,7 +46,7 @@ is the whole interface. The language, region and section are read from the sente
 ## Run it
 
 ```bash
-git clone https://github.com/0xsaroj001/dossier && cd dossier && npm ci
+git clone https://github.com/Harshyadav442277/dossier && cd dossier && npm ci
 ```
 
 ```bash

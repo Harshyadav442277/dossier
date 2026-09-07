@@ -5,7 +5,7 @@ Exact steps, exact expected output. Everything before "Paid" costs nothing.
 ## 0. Fresh clone
 
 ```bash
-git clone https://github.com/0xsaroj001/dossier && cd dossier && npm ci
+git clone https://github.com/Harshyadav442277/dossier && cd dossier && npm ci
 ```
 
 ```bash
@@ -156,11 +156,11 @@ gh auth login
 ```
 
 ```bash
-gh repo create 0xsaroj001/dossier --public --source=. --remote=origin --push
+gh repo create Harshyadav442277/dossier --public --source=. --remote=origin --push
 ```
 
 On Vercel (the project's own account, not any other): **Add New → Project → Import**
-`0xsaroj001/dossier`; framework Next.js is detected; add the variables from `.env.example`;
+`Harshyadav442277/dossier`; framework Next.js is detected; add the variables from `.env.example`;
 **Storage → Upstash Redis → Connect**; deploy; then set `PUBLIC_URL` to the deployment URL and
 redeploy. Verify with `curl https://<deployment>/api/health` (`payerConfigured: true`,
 `paidWorkEnabled: true`, `store: "redis"`).
@@ -175,4 +175,4 @@ document where every line carries the miner, its rank, the router's reasoning, i
 the cost, the signal hash and the on-chain settlement. Every call is on a public ledger and
 counted again from the payer wallet's USDC transfers on Base Sepolia.*
 
-Live: `https://dossier-wukong4.vercel.app` · Repo: `https://github.com/0xsaroj001/dossier` · Payer: `0xFEc66E0F5c64296fF190EdCeD88C781eeEdFd9d3`
+Live: `https://dossier-wukong4.vercel.app` · Repo: `https://github.com/Harshyadav442277/dossier` · Payer: `0xFEc66E0F5c64296fF190EdCeD88C781eeEdFd9d3`

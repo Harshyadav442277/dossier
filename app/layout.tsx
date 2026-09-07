@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="site-nav">
               <Link href="/ledger">Ledger</Link>
               <Link href="/#how">How it works</Link>
-              <a href="https://github.com/0xsaroj001/dossier" rel="noreferrer">Source</a>
+              <a href="https://github.com/Harshyadav442277/dossier" rel="noreferrer">Source</a>
             </nav>
           </div>
         </header>

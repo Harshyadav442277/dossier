@@ -33,7 +33,7 @@ brackets from `/ledger` at posting time; never round a number up. One live dossi
 > and [INTENT] [N] times; [N] needed a second phrasing. Nothing was hand-picked.
 >
 > [/d/… link with a second-phrasing step]
-> Ledger: [ledger URL] · Source: github.com/0xsaroj001/dossier
+> Ledger: [ledger URL] · Source: github.com/Harshyadav442277/dossier
 
 ## 4 — Is this safe? (once a real scam message has been checked)
 

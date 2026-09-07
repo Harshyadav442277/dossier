@@ -135,7 +135,7 @@ export async function fetchSource(url: string, timeoutMs = 12_000): Promise<Sour
     // Follow at most three redirects, checking each hop the way the first URL was checked.
     for (let hop = 0; hop < 4; hop += 1) {
       res = await fetch(current, {
-        headers: { "user-agent": "Mozilla/5.0 (compatible; Dossier/0.1; +https://github.com/0xsaroj001/dossier)", accept: "text/html,application/xhtml+xml" },
+        headers: { "user-agent": "Mozilla/5.0 (compatible; Dossier/0.1; +https://github.com/Harshyadav442277/dossier)", accept: "text/html,application/xhtml+xml" },
         redirect: "manual",
         signal: AbortSignal.timeout(timeoutMs),
       });
