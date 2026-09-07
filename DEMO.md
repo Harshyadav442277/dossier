@@ -32,7 +32,7 @@ Expected (2026-09-06 shape; leaders move with each 9-hour epoch):
 == environment
 node             https://devnode.telegraphprotocol.com
 payer            0x…
-daily budget     400 calls, per visitor 64, price cap $0.02, router timeout 48000 ms
+daily budget     400 calls, per visitor 64, price cap $0.02, router timeout 65000 ms
 paid work        ENABLED
 usdc balance     20.00
 

@@ -48,7 +48,7 @@ limits. Acceptable for a testnet budget the operator can pause.
 Cut at a sentence boundary. The translation miners' limits are undocumented.
 
 ### G10 · One slow question fills the function
-Router timeout 48 s inside a 60 s function. A timed-out question is not re-asked (it may still
+Router timeout 65 s inside a 180 s step function. A timed-out question is not re-asked (it may still
 settle late; the chain count would show it and the ledger would not) and the step fails with a
 timeout message.
 

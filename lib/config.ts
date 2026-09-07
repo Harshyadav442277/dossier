@@ -36,8 +36,8 @@ const schema = z.object({
   /** Sent back by Telegram on every webhook call; any long random string. */
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
   PUBLIC_URL: z.string().optional(),
-  /** One routed ask, including the node's own miner fallback. Must leave room inside a 60 s function. */
-  ROUTER_TIMEOUT_MS: z.coerce.number().int().min(1000).default(48_000),
+  /** One routed ask, including the node's own miner fallback. The step function allows 180 s. */
+  ROUTER_TIMEOUT_MS: z.coerce.number().int().min(1000).default(65_000),
 });
 
 export type Config = z.infer<typeof schema>;

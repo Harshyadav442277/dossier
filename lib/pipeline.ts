@@ -203,11 +203,14 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
     case "fraud": {
       if (!title) return { skip: "No title was extracted, so there is nothing to look up." };
       const ref = paperRef(title, authors, year);
+      // Worded as the FRAUD_DETECTION intent is defined ("how likely is X to be fraudulent"): the
+      // earlier "documented retraction … research paper" wording was filed under research and
+      // sent to an academic-search miner at an endpoint it does not have (2026-09-07).
       return {
         input: { title, authors, year },
         queries: [
-          `Is there any documented fraud, retraction, paper mill, plagiarism or predatory-publishing concern associated with the research paper ${ref}? Answer only with what is documented.`,
-          `Fraud check: has the research paper ${ref} been retracted, or linked to research misconduct, a paper mill or a predatory journal?`,
+          `How likely is the paper ${ref} to be fraudulent? Consider retractions, misconduct findings, paper mills and predatory publishers, and answer only with what is documented.`,
+          `Fraud risk assessment: is ${ref} known to be fraudulent, retracted, or the product of a paper mill? Give a risk level with reasons.`,
         ],
       };
     }
@@ -568,12 +571,14 @@ export async function runStep(spec: StepSpec, parsed: ParsedQuery, context: Cont
   // an endpoint the router invented, a slow facilitator, do not count against that, up to
   // four asks in all: the router is probabilistic, so asking again usually lands elsewhere.
   const MAX_ASKS = 4;
-  const MAX_PAID = 2;
+  // Two paid asks, or three when both answers so far were unusable (the same translator without
+  // the language pair can be picked twice in a row; a third ask usually lands elsewhere).
+  const paidCap = () => (attempts.length >= 2 && attempts.slice(-2).every((a) => a.outcome === "unusable") ? 3 : 2);
   let asks = 0;
   let paid = 0;
   let phrasing: 1 | 2 = 1;
   try {
-    while (asks < MAX_ASKS && paid < MAX_PAID) {
+    while (asks < MAX_ASKS && paid < paidCap()) {
       const allowance = await checkAllowance(ctx.store, ctx.visitor);
       if (!allowance.ok) {
         if (asks === 0) return { ...base, status: "error", receipt: null, data: null, error: allowance.reason, attempts };
