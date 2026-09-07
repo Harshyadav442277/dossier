@@ -92,7 +92,7 @@ test("the workbench runs every step and saves a shareable dossier, paid or not",
   await page.getByLabel("Your question").fill(RESEARCH);
   await page.getByRole("button", { name: "Build the dossier" }).click();
   await expect(page.locator(".step")).toHaveCount(8);
-  await expect(page.locator(".share")).toBeVisible({ timeout: 230_000 });
+  await expect(page.locator(".share")).toBeVisible({ timeout: 600_000 });
   const stepStates = await page.locator(".step").evaluateAll((els) => els.map((e) => e.getAttribute("data-state")));
   if (!health.paidWorkEnabled) {
     // Without a funded wallet the first steps fail honestly and the rest skip for lack of input.
@@ -108,7 +108,7 @@ test("paid: a phishing message gets a Caution verdict with receipts", async ({ p
   await page.getByLabel("Your question").fill("Dear customer, your SBI account will be blocked today. Verify your KYC now at https://example.com/verify and send 0.1 ETH to 0x000000000000000000000000000000000000dEaD to unlock it.");
   await page.getByRole("button", { name: "Check it" }).click();
   await expect(page.locator(".step")).toHaveCount(5);
-  await expect(page.locator(".share")).toBeVisible({ timeout: 230_000 });
+  await expect(page.locator(".share")).toBeVisible({ timeout: 600_000 });
   expect(await page.locator('.step[data-state="ok"]').count()).toBeGreaterThanOrEqual(3);
   await expect(page.locator(".front .card").first()).toContainText(/Caution|No red flags/);
 });
@@ -119,7 +119,7 @@ test("paid: a real research dossier carries signal hashes and settlements", asyn
   await page.getByRole("tab", { name: "Research paper" }).click();
   await page.getByLabel("Your question").fill(RESEARCH);
   await page.getByRole("button", { name: "Build the dossier" }).click();
-  await expect(page.locator(".share")).toBeVisible({ timeout: 230_000 });
+  await expect(page.locator(".share")).toBeVisible({ timeout: 600_000 });
   const okSteps = await page.locator('.step[data-state="ok"]').count();
   expect(okSteps).toBeGreaterThanOrEqual(5);
   await expect(page.locator(".receipt").first()).toContainText("Signal");

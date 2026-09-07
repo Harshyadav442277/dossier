@@ -8,7 +8,8 @@ import { getStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+/** Room for waiting on the payment lock, up to four asks, and one slow miner. */
+export const maxDuration = 180;
 
 const body = z.object({
   mode: z.enum(["research", "news", "safety"]),

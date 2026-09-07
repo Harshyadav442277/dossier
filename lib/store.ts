@@ -24,6 +24,9 @@ export interface Store {
   getOutcome(hash: string): Promise<SavedOutcome | null>;
   /** A generic daily counter (rate limits for free endpoints). Returns the new count. */
   bump(key: string, day: string): Promise<number>;
+  /** A short-lived exclusive lock (one payment in flight per wallet). True when acquired. */
+  acquireLock(key: string, ttlMs: number): Promise<boolean>;
+  releaseLock(key: string): Promise<void>;
 }
 
 export interface SavedOutcome {
@@ -140,6 +143,19 @@ class MemoryStore implements Store {
 
   async bump(key: string, day: string): Promise<number> {
     return this.incr(`rate:${key}:${day}`);
+  }
+
+  private locks = new Map<string, number>();
+
+  async acquireLock(key: string, ttlMs: number): Promise<boolean> {
+    const until = this.locks.get(key);
+    if (until && until > Date.now()) return false;
+    this.locks.set(key, Date.now() + ttlMs);
+    return true;
+  }
+
+  async releaseLock(key: string): Promise<void> {
+    this.locks.delete(key);
   }
 }
 
@@ -262,6 +278,15 @@ class RedisStore implements Store {
     const v = await this.r.incr(k);
     if (v === 1) await this.r.expire(k, DAY_TTL);
     return v;
+  }
+
+  async acquireLock(key: string, ttlMs: number): Promise<boolean> {
+    const r = await this.r.set(K(`lock:${key}`), "1", { nx: true, px: ttlMs });
+    return r === "OK";
+  }
+
+  async releaseLock(key: string): Promise<void> {
+    await this.r.del(K(`lock:${key}`));
   }
 }
 

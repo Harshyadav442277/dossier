@@ -4,7 +4,7 @@ const baseURL = process.env["BASE_URL"] ?? "http://localhost:3000";
 
 export default defineConfig({
   testDir: "e2e",
-  timeout: 240_000,
+  timeout: 720_000,
   expect: { timeout: 15_000 },
   retries: 0,
   reporter: [["list"]],

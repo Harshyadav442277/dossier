@@ -36,13 +36,14 @@ describe("inputs", () => {
   });
   it("asks for a plain-words summary with the abstract as chat context", async () => {
     const d = await deriveInput(spec("summary"), parsed, ctx);
-    expect("queries" in d && d.queries[0]).toMatch(/^In three plain sentences/);
-    expect("context" in d && (d.context?.["messages"] as Array<{ role: string }>)[0]?.role).toBe("system");
+    expect("queries" in d && d.queries[0]).toMatch(/^You explain research to non-specialists/);
+    expect("queries" in d && d.queries[0]).toMatch(/Title: Attention Is All You Need\. Abstract: The dominant/);
+    expect("context" in d ? d.context : undefined).toBeUndefined();
   });
   it("skips authorship on thin prose and sends the abstract as text otherwise", async () => {
     expect(await deriveInput(spec("authorship"), parsed, { source: { abstract: "too short" } })).toHaveProperty("skip");
     const d = await deriveInput(spec("authorship"), parsed, ctx);
-    expect("context" in d && d.context).toEqual({ text: ABSTRACT });
+    expect("context" in d ? d.context : undefined).toBeUndefined();
     expect("queries" in d && d.queries[0]).toMatch(/^Was the following passage written by an AI or by a human\? Passage: The dominant/);
     expect("queries" in d && d.queries[1]).toMatch(/^AI text detection/);
   });
@@ -59,17 +60,19 @@ describe("inputs", () => {
   });
   it("translates whole sentences within the cap and names the language in every translator's shape", async () => {
     const d = await deriveInput(spec("translate"), parsed, ctx);
-    expect("context" in d && d.context).toMatchObject({ target_language: "Hindi", to: "Hindi", langpair: "en|hi" });
-    expect("queries" in d && d.queries[0]).toMatch(/^Translate the following text into Hindi: /);
+    expect("queries" in d && d.queries[0]).toMatch(/^Translate "The dominant .* into Hindi.$/);
+    expect("queries" in d && d.queries[1]).toMatch(/(hi)/);
     expect(clipSentences("One. Two. Three.", 9)).toEqual({ text: "One. Two.", truncated: true });
   });
   it("words the briefing as a writing task from notes, never as a search", async () => {
     const news = parseQuery("news", "AI regulation in India");
     const brief = NEWS_STEPS.find((s) => s.id === "brief")!;
     const d = await deriveInput(brief, news, { headlines: { items: [{ title: "H1", source: "BBC" }] }, search: { articles: [{ title: "A1", source: "Reuters", description: "d" }] } });
-    expect("queries" in d && d.queries[0]).toMatch(/^Write a briefing of 120 to 180 words on AI regulation in India using only the notes below\. Do not look anything up\./);
+    expect("queries" in d && d.queries[0]).toMatch(/^You are a careful analyst writing from notes\. Write a briefing of 120 to 180 words/);
+    expect("queries" in d && d.queries[0]).toMatch(/Subject: AI regulation in India\. Do not look anything up\./);
     expect("queries" in d && d.queries[0]).not.toMatch(/news|headline|coverage/i);
-    expect("context" in d && (d.context?.["messages"] as Array<{ content: string }>)[1]?.content).toMatch(/H1 \(BBC\)[\s\S]*A1 \(Reuters\)/);
+    expect("queries" in d && d.queries[0]).toMatch(/H1 \(BBC\)[\s\S]*A1 \(Reuters\)/);
+    expect("context" in d ? d.context : undefined).toBeUndefined();
     expect(await deriveInput(brief, news, {})).toHaveProperty("skip");
   });
   it("phrases headlines and search with the region", async () => {

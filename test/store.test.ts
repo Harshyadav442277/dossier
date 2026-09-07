@@ -115,3 +115,16 @@ describe("spend guards", () => {
     resetConfigForTests();
   });
 });
+
+describe("payment lock", () => {
+  it("is exclusive until released or expired", async () => {
+    resetStoreForTests();
+    const s = getStore();
+    expect(await s.acquireLock("payment", 1000)).toBe(true);
+    expect(await s.acquireLock("payment", 1000)).toBe(false);
+    await s.releaseLock("payment");
+    expect(await s.acquireLock("payment", 1)).toBe(true);
+    await new Promise((r) => setTimeout(r, 5));
+    expect(await s.acquireLock("payment", 1000)).toBe(true);
+  });
+});

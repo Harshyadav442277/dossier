@@ -51,18 +51,23 @@ re-checked, 40 pages per browser per day), the UI labels it as free and not a Te
 and every paid question works on that abstract. CONTENT_EXTRACTION is then asked what its
 leader is good at: structured facts from inline text.
 
-**A3. Short questions, structured hints.** The classifier sees a natural sentence; anything
-long or exact (the abstract to classify, the text to translate, the briefing material) also
-travels in `context`, which the node merges into the routed request body. The question repeats
-the passage too, so a miner that reads only the verbatim query still gets it.
+**A3. The question carries everything; no `context` hints.** The node merges `context` into
+the routed request body, and a strict miner the router picks (the Bedrock chat miners) rejects
+any key it does not declare with a 400. Translation and detection questions lost most of a day
+to that (GAPS G2). Every passage, target language and instruction is now in the sentence
+itself, worded so the engine can fill the miner's parameters from it (the translator wants the
+text in quotes; the briefing is worded as writing from notes, never as a search).
 
-**A4. Two phrasings per step, and a verdict on every answer.** Each step declares the intents
-it can accept. The first phrasing is sent; if the node refuses for free, the miner's answer
-cannot serve the step (*unusable*), or the router filed it under an intent the step cannot use
-(*off-target*), the second phrasing is sent once. A timeout is never re-asked, because the call
-may still settle. Steps whose meaning depends on the intent (extraction, detection,
-fact-check, translation) are *strict* and never use an off-target answer; the others keep a
-usable off-target answer and say so on the receipt.
+**A4. Two wordings, up to four asks, one payment at a time.** Each step declares the intents
+it can accept. At most two asks are paid (one per wording); a free failure, meaning the node
+refusing, naming a miner it then calls unroutable, inventing an endpoint the miner does not
+declare, or a slow facilitator, does not count, up to four asks in all, because the router is
+probabilistic and asking again usually lands elsewhere. A timeout is never re-asked, because
+the call may still settle. A miner's answer that cannot serve the step is *unusable*; an answer
+filed under an intent the step cannot use is *off-target*; strict steps (extraction, detection,
+fact-check, translation, the briefing) never use an off-target answer, the others keep it and
+say so. All questions from all visitors queue through one lock, because the facilitator
+refuses a second concurrent payment from the same wallet.
 
 **A5. Readers, not request builders.** The app cannot choose the miner, so it only has to
 understand answers. Known miners for each intent have an exact reader taken from their manifest

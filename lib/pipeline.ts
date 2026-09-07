@@ -185,15 +185,9 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       return {
         input: { text, title: title ?? undefined },
         queries: [
-          `In three plain sentences, explain what this paper claims, how it shows it, and why it matters, for a non-specialist. ${head}Abstract: ${text}`,
+          `${SUMMARY_RULES} ${head}Abstract: ${text}`,
           `Rewrite this abstract as a three-sentence summary for a non-specialist: ${text}`,
         ],
-        context: {
-          messages: [
-            { role: "system", content: SUMMARY_RULES },
-            { role: "user", content: `${head}Abstract: ${text}` },
-          ],
-        },
       };
     }
     case "authorship": {
@@ -204,7 +198,6 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       return {
         input: { text },
         queries: [`Was the following passage written by an AI or by a human? Passage: ${text}`, `AI text detection: classify this passage as ai_generated or human_written. ${text}`],
-        context: { text },
       };
     }
     case "fraud": {
@@ -249,13 +242,12 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       const headlines = articlesOf(rec(context.headlines)["items"]).map((a) => a.title).join(". ");
       const source = parsed.mode === "research" ? proseOf(meta) : (brief ?? headlines);
       if (!source) return { skip: "There is no text to translate yet." };
-      const text = clipSentences(source, 700).text;
+      const text = clipSentences(source, 700).text.replace(/"/g, "'");
       const lang = parsed.language;
+      // Quoted first: the #1 translator reads the text from the quotes and answered "no text supplied" to the bare form.
       return {
         input: { text, language: lang, title: title ?? undefined },
-        queries: [`Translate the following text into ${lang.name}: ${text}`, `Translate into ${lang.name} (${lang.code}): "${text}"`],
-        // Hints for every translator shape on the leaderboard: text/target_language, text/to, q/langpair.
-        context: { text, q: text, target_language: lang.name, to: lang.name, langpair: `en|${lang.code}` },
+        queries: [`Translate "${text}" into ${lang.name}.`, `Translate the following text into ${lang.name} (${lang.code}): "${text}"`],
       };
     }
     case "headlines": {
@@ -291,16 +283,10 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
         for (const a of articles.slice(0, 6)) lines.push(`- ${a.title}${a.source ? ` (${a.source}${a.published ? `, ${a.published.slice(0, 16)}` : ""})` : ""}${a.description ? `: ${a.description.slice(0, 240)}` : ""}`);
       }
       const material = lines.join("\n").slice(0, 6000);
-      const ask = `Write a briefing of 120 to 180 words on ${parsed.topic}${where} using only the notes below. Do not look anything up. Name the source of each point in parentheses and end with one line on what to watch next.\n\nNotes:\n${material}`;
+      const ask = `${BRIEF_RULES} Subject: ${parsed.topic}${where}. Do not look anything up.\n\nNotes:\n${material}`;
       return {
         input: { topic: parsed.topic ?? "" },
         queries: [ask, `Summarise these notes into one paragraph of about 150 words, naming sources in parentheses. Do not look anything up.\n\nNotes:\n${material}`],
-        context: {
-          messages: [
-            { role: "system", content: BRIEF_RULES },
-            { role: "user", content: material },
-          ],
-        },
       };
     }
     case "scan": {
@@ -324,7 +310,6 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       return {
         input: { text: ip },
         queries: [`Where is the IP address ${ip} located, and which organisation operates it? It is the address ${host} resolves to.`, `Geolocate the IP address ${ip}: country, city and network operator.`],
-        context: { ip },
       };
     }
     case "scam": {
@@ -366,7 +351,6 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
           `Read this message someone received and say, in plain words, whether it looks like a scam, phishing, spam or legitimate, and which warning signs give it away. Message: "${prose}"`,
           `Classify this text message as one of: scam, phishing, spam, legitimate. Then list the red flags in it, such as urgency, requests for money or codes, unknown links, or impersonation. Message: "${prose}"`,
         ],
-        context: { text: prose },
       };
     }
     default:
@@ -478,6 +462,35 @@ function finish(spec: StepSpec, out: Outcome, input: StepInput): Outcome {
   return { receipt: out.receipt, data: { ...data, found, answer: data["answer"] ?? out.receipt.answer } };
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * One payment in flight per wallet: the facilitator refuses a second concurrent payment from
+ * the same payer ("batch_send_failed"), so questions from all visitors queue through one lock.
+ * Best effort: after 30 s of waiting the question goes anyway.
+ */
+async function withPaymentLock<T>(store: Store, fn: () => Promise<T>): Promise<T> {
+  const key = "payment";
+  const deadline = Date.now() + 30_000;
+  let held = false;
+  try {
+    while (Date.now() < deadline) {
+      if (await store.acquireLock(key, 55_000)) {
+        held = true;
+        break;
+      }
+      await sleep(400);
+    }
+  } catch {
+    held = false;
+  }
+  try {
+    return await fn();
+  } finally {
+    if (held) await store.releaseLock(key).catch(() => undefined);
+  }
+}
+
 /** Ask the router once and read what came back. Returns the outcome and how it should be judged. */
 async function askOnce(
   spec: StepSpec,
@@ -492,7 +505,7 @@ async function askOnce(
   await noteAttempt(ctx.store, ctx.visitor);
   let raw: EngineResponse;
   try {
-    raw = await askRouted(query, derived.context);
+    raw = await withPaymentLock(ctx.store, () => askRouted(query, derived.context));
   } catch (e) {
     const err = toNodeError(e);
     const status: LedgerRow["status"] = err.kind === "timeout" ? "timeout" : err.kind === "unpaid" ? "unpaid" : "error";
@@ -551,34 +564,44 @@ export async function runStep(spec: StepSpec, parsed: ParsedQuery, context: Cont
   const attempts: Attempt[] = [];
   let offTarget: Outcome | null = null;
   let lastError = "The network could not serve this step.";
-  // The router is probabilistic and "not currently routable" is a free failure, so one more ask
-  // with the first wording is allowed when both phrasings failed that way.
-  const unroutable = (e: NodeError | null) => Boolean(e && e.kind === "node" && /not currently routable|routing failed/i.test(e.message));
-  const plan: Array<1 | 2> = [1, 2];
+  // Up to two paid asks (one per wording). Free failures, a miner the node calls unroutable,
+  // an endpoint the router invented, a slow facilitator, do not count against that, up to
+  // four asks in all: the router is probabilistic, so asking again usually lands elsewhere.
+  const MAX_ASKS = 4;
+  const MAX_PAID = 2;
+  let asks = 0;
+  let paid = 0;
+  let phrasing: 1 | 2 = 1;
   try {
-    for (let i = 0; i < plan.length; i += 1) {
-      const phrasing = plan[i] as 1 | 2;
+    while (asks < MAX_ASKS && paid < MAX_PAID) {
       const allowance = await checkAllowance(ctx.store, ctx.visitor);
       if (!allowance.ok) {
-        if (phrasing === 1) return { ...base, status: "error", receipt: null, data: null, error: allowance.reason, attempts };
+        if (asks === 0) return { ...base, status: "error", receipt: null, data: null, error: allowance.reason, attempts };
         lastError = allowance.reason ?? lastError;
         break;
       }
       const r = await askOnce(spec, parsed, derived, phrasing, ctx, attempts);
+      asks += 1;
+      phrasing = phrasing === 1 ? 2 : 1;
       if (r.error) {
         lastError = humanError(r.error);
         // A timeout has an unknown outcome and the call may still settle; never send the question again.
         if (r.error.kind === "timeout") break;
-        if (plan.length === 2 && i === 1 && unroutable(r.error) && attempts.every((a) => a.outcome === "error")) plan.push(1);
+        if (r.error.kind === "network") break;
+        if (r.error.kind === "unpaid") {
+          if (/insufficient_credits/i.test(r.error.message)) break;
+          await sleep(1500);
+        }
         continue;
       }
+      paid += 1;
       if (r.outcome && r.usable && r.accepted) {
         const done = finish(spec, r.outcome, derived.input);
         await keep(ctx, spec, done);
         return { ...base, status: "ok", receipt: done.receipt, data: done.data, error: null, attempts };
       }
       if (r.outcome && r.usable && !r.accepted && !spec.strict && !offTarget) offTarget = r.outcome;
-      lastError = r.usable ? `The router filed this under ${r.outcome?.receipt.routerIntent ?? "another intent"} both times, so no ${spec.intent} miner answered.` : (attempts[attempts.length - 1]?.note ?? lastError);
+      lastError = r.usable ? `The router filed this under ${r.outcome?.receipt.routerIntent ?? "another intent"}, so no ${spec.intent} miner answered.` : (attempts[attempts.length - 1]?.note ?? lastError);
     }
     if (offTarget) {
       offTarget.receipt.routerReasoning = `Filed under ${offTarget.receipt.routerIntent ?? "another intent"} rather than ${spec.intent}. ${offTarget.receipt.routerReasoning ?? ""}`.trim();

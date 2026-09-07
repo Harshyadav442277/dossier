@@ -4,14 +4,13 @@ Read before trusting a claim. Newest first within each state.
 
 ## Open
 
-### G2 · A `context` hint can break the miner the router picks
-Confirmed 2026-09-06 12:50 UTC: the key-facts question, sent with `context: {text}`, was routed to
-a Bedrock chat miner whose schema rejected the extra key ("extraneous key [text] is not
-permitted"), a 500 with nothing charged. The hint was removed from that step. The translation
-hint (`text`, `q`, `target_language`, `to`, `langpair`) has worked live with the MyMemory
-miner; the authorship hint (`text`) and the chat `messages` hints have not yet been seen to
-break anything, but any strict miner the router picks could reject them. If a step fails twice
-with "failed on its side", drop its hint first.
+### G21 · Roughly a third of questions still fail on the network's side
+Over 120 production rows on 2026-09-06/07: 72 answered; the rest were the router naming a miner
+the node then called unroutable (15), an endpoint the miner does not declare (5), 48-second
+timeouts (4), the facilitator timing out or refusing a second concurrent payment (5), and the
+LaTeX and `context` faults since fixed. The free ones are now retried up to four asks per step
+and payments are serialised (ARCHITECTURE A4); timeouts cannot be. Every failed step names its
+cause and says nothing was charged.
 
 ### G3 · The page is read by the app, not by the network
 Verified with paid probes on 2026-09-06: every phrasing containing a link was routed to
@@ -109,6 +108,12 @@ dossier. The MCP endpoint has been exercised end to end (initialize, tools/list,
 `dossier_safety` call) locally.
 
 ## Closed
+
+### G2 · `context` hints — CLOSED 2026-09-07 15:40 UTC, removed everywhere
+Confirmed twice: a Bedrock chat miner the router picked rejected the extra key ("extraneous key
+[text] is not permitted"), for the key-facts question on 2026-09-06 and for translation and
+detection on 2026-09-07 (translation answered 2 of 8). No step sends `context` any more; the
+sentence carries the passage, the target language and the instructions.
 
 ### G1b · Deployment configured — CLOSED 2026-09-06 11:40 UTC
 Payer key set, Upstash Redis connected (`store: "redis"`), budget 400, caps, salt and public URL
