@@ -33,6 +33,13 @@ describe("buildReceipt", () => {
     );
     expect(r).toMatchObject({ minerSlug: "livecert", minerRank: 1, confidence: 1, label: "translated", answer: "नमस्ते", costUsd: 0.01, durationMs: 320, signalHash: "0xabc", settlementTx: "0xdef", routerIntent: "LANGUAGE_TRANSLATION" });
   });
+  it("treats a paragraph in the label field as answer text, not a label", () => {
+    const prose = "This message is classified as a phishing scam. Red flags include urgency and a request for money.";
+    const r = buildReceipt({ result: { signal: prose, evidence: "urlhaus: none" } }, { intent: "FRAUD_DETECTION", miner: { id: "1", slug: "chainsight-oracle", signal_mapping: { label_field: "signal", reason_field: "evidence" } }, rank: null, payer: null });
+    expect(r.label).toBeNull();
+    expect(r.answer).toMatch(/^This message is classified as a phishing scam\./);
+    expect(r.answer).toContain("urlhaus: none");
+  });
   it("labels a risk score instead of calling it confidence", () => {
     const r = buildReceipt({ result: { risk: 0.9 } }, { intent: "STORM_ALERT", miner: { id: "1", slug: "storm", signal_mapping: { confidence_field: "risk" } }, rank: null, payer: null });
     expect(r.confidence).toBe(0.9);

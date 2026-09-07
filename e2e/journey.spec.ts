@@ -52,6 +52,16 @@ test("a safety query plans the checks its input allows", async ({ request }) => 
   expect(nothing.status()).toBe(400);
 });
 
+test("the MCP endpoint lists the five tools", async ({ request }) => {
+  const headers = { accept: "application/json, text/event-stream", "content-type": "application/json" };
+  const init = await request.post("/api/mcp", { headers, data: { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "journey", version: "0" } } } });
+  expect(init.ok()).toBeTruthy();
+  expect((await init.json()).result.serverInfo.name).toBe("dossier");
+  const list = await request.post("/api/mcp", { headers, data: { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} } });
+  const names = (await list.json()).result.tools.map((t: { name: string }) => t.name).sort();
+  expect(names).toEqual(["dossier_get", "dossier_ledger", "dossier_news", "dossier_research", "dossier_safety"]);
+});
+
 test("the page's own metadata is read for free", async ({ request }) => {
   const res = await request.post("/api/source", { data: { url: "https://arxiv.org/abs/1706.03762" } });
   const j = await res.json();

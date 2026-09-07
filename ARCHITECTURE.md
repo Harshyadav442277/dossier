@@ -101,6 +101,13 @@ clones the request for the paid retry; on a serverless runtime the `(url, init)`
 body on the retry and the node answered with a bare challenge. Building `new Request(...)` first
 is the fix; do not simplify it away without re-running a paid call on the deployment.
 
+**A12. MCP and Telegram share one server-side runner.** `lib/run.ts` runs a whole dossier in
+sequence with a callback per finished step; `app/api/mcp` (official MCP SDK, web-standard
+Streamable HTTP transport, stateless per request, `maxDuration` 300) and `app/api/telegram`
+(webhook, quick 200, the run continues inside `waitUntil`, one progress message edited per
+step) both call it. Visitors are keyed by caller address or chat id, so the same allowance
+applies; nothing bypasses the guards, the ledger or the router-only rule.
+
 ## Data
 
 - `LedgerRow`: one per question, with the step's intent and the router's intent, status

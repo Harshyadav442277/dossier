@@ -25,6 +25,26 @@ payment settled on Base Sepolia.
 One query such as *"Extract the research paper at https://arxiv.org/abs/1706.03762 in Hindi"*
 is the whole interface. The language, region and section are read from the sentence.
 
+## Three doors: web, MCP, Telegram
+
+- **Web**: <https://dossier-wukong4.vercel.app>.
+- **MCP** (Streamable HTTP, no auth): `https://dossier-wukong4.vercel.app/api/mcp`. Tools
+  `dossier_research(url, language?)`, `dossier_news(topic, language?)`, `dossier_safety(text)`,
+  `dossier_get(id)`, `dossier_ledger()`. Each paid tool runs the whole dossier and returns the
+  summary, the share link and every receipt. Add it to Claude Code with:
+
+```bash
+claude mcp add --transport http dossier https://dossier-wukong4.vercel.app/api/mcp
+```
+
+- **Telegram**: talk to the bot the operator registers (`npm run telegram:setup` after setting
+  `TELEGRAM_BOT_TOKEN`). `/research <link> [in Hindi]`, `/news <topic>`, `/safe <link, wallet or
+  message>`, or just paste; one message shows progress per question, then the summary and the
+  share link.
+
+All three share one runner, one wallet, one ledger and the same daily allowance per visitor
+(browser cookie, MCP caller address, or Telegram chat).
+
 ## What makes it honest
 
 - **Routed, never hand-picked.** The app never names a miner. Every question is an auto-routed

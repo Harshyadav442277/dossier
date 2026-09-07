@@ -38,12 +38,13 @@ export function toneOf(s: StepResult): Tone {
     if (n <= 20) return "clear";
     if (n >= 60) return "caution";
   }
-  // A short label is a verdict in itself; a long one is prose and is read like the answer.
+  // A short label is a verdict in itself; a long one is prose and is read together with the answer.
   if (label && label.length <= 60) {
     const t = toneOfText(label);
     if (t !== "unknown") return t;
+    return toneOfText(answer);
   }
-  return toneOfText(answer);
+  return toneOfText(`${label} ${answer}`.trim());
 }
 
 export function safetyVerdict(steps: StepResult[]): { tone: Tone; line: string; flagged: string[]; checked: number } {

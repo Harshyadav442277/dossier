@@ -31,6 +31,10 @@ const schema = z.object({
   KV_REST_API_URL: z.string().optional(),
   KV_REST_API_TOKEN: z.string().optional(),
   TELEGRAPH_NODE: z.string().default("https://devnode.telegraphprotocol.com"),
+  /** From @BotFather. Absent means the Telegram surface is off. */
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  /** Sent back by Telegram on every webhook call; any long random string. */
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
   PUBLIC_URL: z.string().optional(),
   /** One routed ask, including the node's own miner fallback. Must leave room inside a 60 s function. */
   ROUTER_TIMEOUT_MS: z.coerce.number().int().min(1000).default(48_000),

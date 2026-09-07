@@ -133,6 +133,35 @@ npm run live -- safety "Your SBI account will be blocked today, verify at http:/
 Expected: `scan`, `cert`, `where`, `scam`, `redflags` answered through the router, and a verdict
 line such as `Caution: 2 of 5 checks raised a red flag (Link scan, Red flags in the message).`
 
+## 3b. MCP
+
+```bash
+claude mcp add --transport http dossier https://dossier-wukong4.vercel.app/api/mcp
+```
+
+Then in Claude Code: *"Use dossier_safety on: Your account will be blocked today, verify at
+https://example.com/verify"*. Expected: a text result with the verdict line, one line per check
+with miner, routed intent, signal and settlement, and the share link. Without a client:
+
+```bash
+curl -s -X POST https://dossier-wukong4.vercel.app/api/mcp -H "content-type: application/json" -H "accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+Expected: five tools.
+
+## 3c. Telegram
+
+Create a bot with @BotFather, put its token in `TELEGRAM_BOT_TOKEN` and a random string in
+`TELEGRAM_WEBHOOK_SECRET` (locally and on Vercel), redeploy, then:
+
+```bash
+npm run telegram:setup
+```
+
+Expected: `webhook https://dossier-wukong4.vercel.app/api/telegram · pending 0` and the bot's
+username. In Telegram, send the bot `/safe` followed by a suspicious message: one message
+appears with a checklist that fills in per question, then the summary with the share link.
+
 ## 4. Judge journey, automated
 
 ```bash

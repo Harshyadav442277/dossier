@@ -95,7 +95,10 @@ export function buildReceipt(resp: EngineResponse, ctx: ReceiptContext): Receipt
   const confidence =
     mapped ?? toConfidence(getPath(r, "confidence")) ?? toConfidence(getPath(r, "confidence_score")) ?? toConfidence(getPath(r, "score"));
   const labelRaw = getPath(r, mapping?.label_field) ?? getPath(r, "verdict") ?? getPath(r, "label");
-  const label = typeof labelRaw === "string" || typeof labelRaw === "number" ? String(labelRaw).replace(/\s+/g, " ").slice(0, 160) : null;
+  const labelText = typeof labelRaw === "string" || typeof labelRaw === "number" ? String(labelRaw).replace(/\s+/g, " ").trim() : "";
+  // Some miners declare their whole prose as the label; a label is a verdict, not a paragraph.
+  const label = labelText && labelText.length <= 60 ? labelText : null;
+  const answerText = extractAnswer(r, mapping);
   return {
     intent: ctx.intent,
     minerSlug: ctx.miner?.slug ?? resp.miner_name ?? null,
@@ -108,7 +111,8 @@ export function buildReceipt(resp: EngineResponse, ctx: ReceiptContext): Receipt
     confidence,
     confidenceNote: risk ? "This miner reports a risk score, not certainty." : null,
     label,
-    answer: extractAnswer(r, mapping),
+    // When the prose lived in the label field, make sure it is the answer too.
+    answer: labelText.length > 60 && !answerText.startsWith(labelText.slice(0, 40)) ? `${labelText} ${answerText}`.trim() : answerText,
     costUsd: typeof resp.cost_usd === "number" ? resp.cost_usd : null,
     durationMs: typeof resp.duration_ms === "number" ? Math.round(resp.duration_ms) : null,
     signalHash: resp.signal_hash ?? null,

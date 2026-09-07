@@ -101,6 +101,13 @@ the AI_TEXT_DETECTION miners were unavailable so the router fell back to a chat 
 strict authorship step refuses. All are free failures and are named on the step. A third ask
 with the first wording is now allowed when both phrasings died as unroutable.
 
+### G20 · Telegram is untested until a bot token exists
+The webhook route, the command parser, the progress editing and the setup script are written
+and unit-tested, but no bot has been created, so no message has gone through. `waitUntil` keeps
+the run alive after the 200; on Vercel the function's 300 s ceiling applies to the whole
+dossier. The MCP endpoint has been exercised end to end (initialize, tools/list, a paid
+`dossier_safety` call) locally.
+
 ## Closed
 
 ### G1b · Deployment configured — CLOSED 2026-09-06 11:40 UTC

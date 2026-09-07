@@ -43,6 +43,15 @@ brackets from `/ledger` at posting time; never round a number up. One live dossi
 >
 > [/d/… link of a Caution verdict] · [deployment URL]
 
+## 5 — MCP and Telegram
+
+> Dossier is now an MCP server and a Telegram bot. Any agent can call dossier_research,
+> dossier_news or dossier_safety and get the case file with every @Telegraphprotoc receipt;
+> in Telegram, paste the message your uncle forwarded and watch the checks come in one by one.
+>
+> `claude mcp add --transport http dossier https://dossier-wukong4.vercel.app/api/mcp`
+> Bot: @[handle]
+
 ## Replies worth having ready
 
 - "Is the money real?" — Testnet USDC on Base Sepolia. The answers and the miners are real; the

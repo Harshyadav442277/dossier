@@ -15,10 +15,13 @@
     "e2e": "playwright test",
     "preflight": "tsx scripts/preflight.ts",
     "live": "tsx scripts/live.ts",
-    "ask": "tsx scripts/ask.ts"
+    "ask": "tsx scripts/ask.ts",
+    "telegram:setup": "tsx scripts/telegram-setup.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@upstash/redis": "^1.38.4",
+    "@vercel/functions": "^3.9.5",
     "@x402/core": "2.24.0",
     "@x402/evm": "2.24.0",
     "@x402/fetch": "2.24.0",
