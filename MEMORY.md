@@ -98,5 +98,8 @@ the operator's.
 - The judge journey is only free when paid work is off. A local `npm run e2e` at 17:35 UTC
   with the production key and a budget set spent $0.08 on eight routed calls that sit on chain
   and not on the ledger (G22). Set `DAILY_CALL_BUDGET=0` before any local run.
+- Pushing to GitHub deploys nothing: the Vercel project is linked but not git-connected.
+  Deploy with `npx vercel deploy` (preview, no payer key), check the pages, then
+  `npx vercel deploy --prod`; the alias swaps within seconds of "status ok".
 - The organisers' rules, compiled 2026-09-07: only routed calls count; scripted calls do not;
   never re-ask an intent to several miners or grade them; lead with the person's problem.
