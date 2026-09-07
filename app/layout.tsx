@@ -4,13 +4,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Dossier",
-  description: "Ask once, get a case file. Research papers and news topics checked across ten Telegraph intents, with a receipt for every call.",
+  description: "Ask once, get the case file. A paper, a news topic or a message you are not sure about, checked across fourteen Telegraph intents, with a receipt for every call.",
   openGraph: {
     title: "Dossier",
-    description: "One question, ten intents, one case file. Built on the Telegraph miner network.",
+    description: "One question, fourteen intents, one case file. Every answer bought from a Telegraph miner the router chose, with the receipt on the line.",
     type: "website",
   },
-  twitter: { card: "summary", title: "Dossier", description: "One question, ten intents, one case file. Built on the Telegraph miner network." },
+  twitter: { card: "summary", title: "Dossier", description: "One question, fourteen intents, one case file. Every answer bought from a Telegraph miner the router chose, with the receipt on the line." },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

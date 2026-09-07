@@ -67,7 +67,7 @@ export default async function LedgerPage() {
         </div>
       </div>
       <p className="note">
-        A visitor is a browser: a random cookie, stored only as a salted hash. One person on two devices counts twice; the method is published so the number can be read for what it is. Store: {store.kind}
+        A visitor is a browser (a random cookie), a Telegram chat, or an MCP caller&apos;s network address, each stored only as a salted hash. One person on two devices counts twice; the method is published so the number can be read for what it is. Store: {store.kind}
         {store.kind === "memory" ? " (resets on every cold start; set Upstash Redis to keep history)" : ""}. Daily budget {c.DAILY_CALL_BUDGET} calls
         {c.PAUSED ? ", paused" : ""}.
       </p>

@@ -52,10 +52,6 @@ Router timeout 65 s inside a 180 s step function. A timed-out question is not re
 settle late; the chain count would show it and the ledger would not) and the step fails with a
 timeout message.
 
-### G11 · Track 3 submission form not yet seen
-Its field list is unknown. Repo, live URL, payer address, one-paragraph description and the X
-handle are ready in DEMO.md.
-
 ### G12 · No X posts yet, no users yet
 The 45% criterion is untouched until the deployment is public and shared.
 
@@ -107,6 +103,12 @@ dossier. The MCP endpoint has been exercised end to end (initialize, tools/list,
 `dossier_safety` call) locally.
 
 ## Closed
+
+### G11 · Track 3 submission form — CLOSED 2026-09-07 17:20 UTC, form seen
+Five fields: X username, title, description, GitHub repo URL, live app URL. Closes 23:59:59 UTC.
+Title, description, both URLs are in DEMO.md §6, checked against production (`/api/health` ok,
+`store: "redis"`, paid work enabled) and the public repo. The X handle is the operator's and is
+not in the repository.
 
 ### G2 · `context` hints — CLOSED 2026-09-07 15:40 UTC, removed everywhere
 Confirmed twice: a Bedrock chat miner the router picked rejected the extra key ("extraneous key

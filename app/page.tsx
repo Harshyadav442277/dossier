@@ -26,7 +26,7 @@ export default function Home() {
     <>
       <h1>Ask once. Get the case file.</h1>
       <p className="lede">
-        Paste a paper, name a news topic, or drop in a message you are not sure about. Dossier turns it into a sequence of questions for Telegraph&apos;s router, which picks the intent and the miner for each, and hands you a case file where every line carries the miner that said it, how sure it was, what it cost, and the on-chain receipt.
+        A paper someone sent you. A message that looks like a scam. A topic you need to brief on in a minute. Dossier turns the one question you have into a sequence of questions for Telegraph&apos;s router, which picks the intent and the miner for each, and hands you a case file where every line carries the miner that said it, how sure it was, what it cost, and the on-chain receipt.
       </p>
       <Workbench />
       <section className="about" id="how">

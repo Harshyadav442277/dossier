@@ -24,7 +24,7 @@ test("health reports the configuration honestly", async ({ request }) => {
   expect(j.budget).toHaveProperty("limit");
 });
 
-test("a research query plans eight questions over seven intents", async ({ request }) => {
+test("a research query plans eight questions over eight intents", async ({ request }) => {
   const res = await request.post("/api/plan", { data: { mode: "research", query: RESEARCH } });
   const j = await res.json();
   expect(j.ok).toBe(true);

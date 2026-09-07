@@ -211,10 +211,10 @@ export default function Workbench() {
       </div>
       <p className="note" style={{ marginTop: 10 }}>
         {mode === "research"
-          ? "Dossier reads the page's own metadata for free, then puts eight questions to Telegraph's router across seven intents: key facts, a plain-words summary, AI-text detection, fraud record, fact-check, provenance, related work, translation. The router picks the intent and the miner; each question shows its receipt."
+          ? "Dossier reads the page's own metadata for free, then puts eight questions to Telegraph's router across eight intents: key facts, a plain-words summary, AI-text detection, fraud record, fact-check, provenance, related work, translation. The router picks the intent and the miner; each question shows its receipt."
           : mode === "news"
             ? "Three to four questions, four intents: headlines, recent coverage, a written briefing, translation. Each goes to Telegraph's router, which picks the intent and the miner, and each shows its receipt."
-            : "Up to five questions, four intents: link scan, certificate, where the host really is, fraud record, red flags in the message. Each goes to Telegraph's router; the verdict is drawn from the miners' own labels, with no extra call. Nothing you paste is stored beyond the receipts."}
+            : "Up to five questions, five intents: link scan, certificate, where the host really is, fraud record, red flags in the message. Each goes to Telegraph's router; the verdict is drawn from the miners' own labels, with no extra call. Nothing you paste is stored beyond the receipts."}
       </p>
       {error && <p className="error">{error}</p>}
       {parsed && <DossierView mode={mode} parsed={parsed} source={source} sourceError={sourceError} steps={steps} summary={summary} shareUrl={share} done={done} />}

@@ -196,12 +196,69 @@ redeploy. Verify with `curl https://<deployment>/api/health` (`payerConfigured: 
 
 ## 6. Submission text
 
-*Dossier turns one question into a case file from the Telegraph network. Paste a paper or name a
-news topic; it plans up to eight questions across seven canonical intents (extraction, AI-text
-detection, fraud, fact-check, provenance, academic search, translation, or headlines, news
-search, chat completion, translation), puts every one to Telegraph's own router, and returns one
-document where every line carries the miner, its rank, the router's reasoning, its confidence,
-the cost, the signal hash and the on-chain settlement. Every call is on a public ledger and
-counted again from the payer wallet's USDC transfers on Base Sepolia.*
+The Track 3 form (seen 2026-09-07 17:15 UTC) has five fields: X username, title, description,
+GitHub repo URL, live app URL. It closes 2026-09-07 23:59:59 UTC.
 
-Live: `https://dossier-wukong4.vercel.app` · Repo: `https://github.com/Harshyadav442277/dossier` · Payer: `0xFEc66E0F5c64296fF190EdCeD88C781eeEdFd9d3`
+**Title:** `Dossier`
+
+**Description.** Alexandria cards (seen 2026-09-07 17:40 UTC) are a name, a three-word tagline
+in capitals, two sentences, and "Powered by MN<id>" chips; the other Track 3 apps list one or
+two hand-picked miners. The first three lines below are that card. Refresh every number from
+`/ledger` at submission time, never rounded up.
+
+*ONE QUESTION, FOURTEEN INTENTS*
+
+*Paste a paper, a news topic, or a forwarded message that looks like a scam. Dossier plans it
+into up to eight questions and puts every one to Telegraph's own router, which has answered
+through 30 different miners so far; every line of the case file carries the miner and its rank,
+the router's reasoning, the confidence, the signal hash and the on-chain settlement.*
+
+*Someone sends you a paper to check, a message that looks like a scam, or asks what is going on
+with a topic, and you have a minute. Dossier takes that one question and returns a case file in
+which every finding was bought from a Telegraph miner the network's own router chose, with the
+receipt on the line.*
+
+*Multi-intent, cross-domain, routed. A research link becomes eight questions: key facts, a
+plain-words summary, whether the abstract is machine-written, any fraud or retraction record,
+whether the key claim holds, provenance, related work, a translation. A news topic becomes
+headlines, a search, a written briefing and a translation. A link, wallet or forwarded message
+becomes a link scan, a certificate check, where the host really is, its fraud record and the red
+flags in the text. Fourteen intents asked (CONTENT_EXTRACTION, CHAT_COMPLETION,
+AI_TEXT_DETECTION, FRAUD_DETECTION, FACT_CHECK, CONTENT_VERIFICATION, ACADEMIC_SEARCH,
+LANGUAGE_TRANSLATION, NEWS_HEADLINES, NEWS_SEARCH, URL_SCAN, SSL_VERIFICATION, IP_GEOLOCATION,
+TEXT_CLASSIFICATION); the router has filed them under nineteen. Each question is one
+auto-routed POST /engine/v1/ask. Dossier never names a miner, never asks a second miner for a
+second opinion, and never grades them.*
+
+*Signal quality and verification. Every line carries the miner and its rank, the intent the
+router chose and its stated reasoning, the miner's confidence, the price, the signal hash and
+the on-chain settlement. Verdicts come from the miners' own labels, never from comparing
+miners. A failed or unusable answer says so, and whether anything was charged. Nothing is
+mocked or filled in.*
+
+*Three doors, one wallet, one ledger. The web app; the Telegram bot @My_Dossier_bot, where a
+forwarded message becomes a checklist that fills in one miner at a time; and an MCP server at
+/api/mcp (five tools, Streamable HTTP, no auth), so any agent can order a case file with every
+receipt attached.*
+
+*Organic by construction. Every call traces to a person's click or message. No cron, no
+scripts, no keep-warm. The public ledger at /ledger lists every call with a hashed visitor id
+and, beside it, the payer wallet's USDC transfers to the Telegraph collector read from
+Blockscout, so the volume can be checked without taking the app's word. Every signal hash opens
+on the node.*
+
+*At submission (7 Sep, [HH:MM] UTC, from /ledger): [N] routed calls, [N] answered, [N]
+dossiers, [N] visitors, [N] settlements on chain, [N] miners.*
+
+*Payer wallet 0xFEc66E0F5c64296fF190EdCeD88C781eeEdFd9d3 · Base Sepolia · USDC · node
+devnode.telegraphprotocol.com · every miner chosen by the router.*
+
+**GitHub repo URL:** `https://github.com/Harshyadav442277/dossier`
+
+**Live app URL:** `https://dossier-wukong4.vercel.app`
+
+**X username:** the operator's handle; it is not recorded in this repository.
+
+Payer (if asked anywhere): `0xFEc66E0F5c64296fF190EdCeD88C781eeEdFd9d3` · Ledger:
+`https://dossier-wukong4.vercel.app/ledger` · MCP: `https://dossier-wukong4.vercel.app/api/mcp`
+· Telegram: `https://t.me/My_Dossier_bot`
