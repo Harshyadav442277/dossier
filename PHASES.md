@@ -50,6 +50,13 @@ in the message; four more intents (URL_SCAN, SSL_VERIFICATION, IP_GEOLOCATION,
 TEXT_CLASSIFICATION), fourteen in all. Verdict computed from the miners' labels. 61 unit
 tests, journey 9/9 free.
 
+## Phase 3c — MCP and Telegram, 2026-09-07 14:20–17:00 UTC — done
+
+One shared runner; `/api/mcp` with five tools (verified end to end, added to the operator's
+Claude Code); @My_Dossier_bot with webhook, progress editing and a first real run. Reliability
+work from the production ledger: LaTeX stripping, no context hints, four asks per step, payment
+lock, 180 s bound. 71 unit tests; journey suite 11 tests.
+
 ## Phase 4 — Distribution, until the deadline
 
 - Three X updates from docs/x-updates.md with real dossier links and ledger numbers, each tagged

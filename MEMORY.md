@@ -64,3 +64,34 @@ Read first every session. Keep it short: decisions and why, lessons and what the
   building anything that chooses on the network's behalf.
 - Two unit tests caught my own helpers: the numbered-title regex ran across a quoted title, and
   the claim picker preferred "we propose" over "experiments show". Ten minutes each.
+
+## 2026-09-07 — Ship day
+
+**State at 17:10 UTC.** Live on three doors: web <https://dossier-wukong4.vercel.app>, MCP
+`/api/mcp` (five tools, verified end to end), Telegram @My_Dossier_bot (webhook registered,
+first real safety check ran 16:48 UTC, dossier saved). Repo `Harshyadav442277/dossier`, latest
+`71e32cc`. Production: Redis, payer `0xFEc66E…9d3` with ~52 USDC, budget 400/day, 241 calls,
+15 visitors, 28 dossiers. Deadline 23:59:59 UTC today; X posts and the submission form are
+the operator's.
+
+**Decisions**
+- Third mode "Is this safe?" (URL_SCAN, SSL_VERIFICATION, IP_GEOLOCATION, FRAUD_DETECTION,
+  TEXT_CLASSIFICATION), verdict computed from the miners' labels; fourteen intents in all.
+- MCP and Telegram share `lib/run.ts`; Telegram answers 200 fast and runs inside `waitUntil`.
+- No `context` hints at all (A3); questions carry everything.
+- Up to four asks per step, two paid (three if two were unusable), 65 s per ask, no new ask
+  after 75 s, one payment at a time through a Redis lock (A4).
+
+**Lessons, each paid for**
+- Backslashes (LaTeX) in a question break the router's own JSON; strip them before sending.
+- A `context` key a strict chat miner does not declare is a 400; translation fell to 2/8.
+- The #1 translator wants the text in quotes; the Apertium one has no Hindi and gets picked
+  repeatedly, so demo with Spanish or French.
+- "Documented retraction … research paper" is filed under research and hits an endpoint the
+  router invents; "how likely is X to be fraudulent" is filed under FRAUD_DETECTION.
+- Naming "news" or "headlines" in a writing task makes the router file it as a search.
+- A miner that puts its paragraph in the label field hid a phishing verdict; labels over 60
+  characters are prose.
+- Four slow asks plus lock waiting exceeded Vercel's 180 s; bound the step, not the ask.
+- The facilitator's "insufficient_credits" is the node's balance, not the payer's; the
+  organisers confirmed spam had drained it.
