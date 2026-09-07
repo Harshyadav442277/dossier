@@ -95,3 +95,8 @@ the operator's.
 - Four slow asks plus lock waiting exceeded Vercel's 180 s; bound the step, not the ask.
 - The facilitator's "insufficient_credits" is the node's balance, not the payer's; the
   organisers confirmed spam had drained it.
+- The judge journey is only free when paid work is off. A local `npm run e2e` at 17:35 UTC
+  with the production key and a budget set spent $0.08 on eight routed calls that sit on chain
+  and not on the ledger (G22). Set `DAILY_CALL_BUDGET=0` before any local run.
+- The organisers' rules, compiled 2026-09-07: only routed calls count; scripted calls do not;
+  never re-ask an intent to several miners or grade them; lead with the person's problem.

@@ -4,6 +4,13 @@ Read before trusting a claim. Newest first within each state.
 
 ## Open
 
+### G22 · Eight settlements on chain that are not on the ledger
+Between 17:35 and 17:41 UTC on 2026-09-07 a local run of the judge journey, with the production
+payer key and a budget in `.env.local`, made eight routed calls ($0.08) that were recorded in the
+local memory store only. The chain count on `/ledger` is eight higher than the ledger's own
+settlements for that window. Operator test traffic, not users, and not in the ledger's totals.
+Guard added to README and DEMO: run the journey with `DAILY_CALL_BUDGET=0`.
+
 ### G21 · Roughly a third of questions still fail on the network's side
 Over 120 production rows on 2026-09-06/07: 72 answered; the rest were the router naming a miner
 the node then called unroutable (15), an endpoint the miner does not declare (5), 48-second

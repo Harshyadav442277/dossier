@@ -168,13 +168,15 @@ appears with a checklist that fills in per question, then the summary with the s
 npm run e2e
 ```
 
-Expected: `7 passed`, `1 skipped` (the paid test). Against the deployment, with the paid test:
+Run it with `DAILY_CALL_BUDGET=0` in `.env.local`: the workbench test builds a real dossier if
+paid work is on, and a test run is not organic traffic. Expected: `10 passed`, `2 skipped` (the
+paid tests). Against a deployment of your own, with the paid tests:
 
 ```bash
 BASE_URL=https://<deployment> E2E_PAID=1 npm run e2e
 ```
 
-Expected: `8 passed`.
+Expected: `12 passed`. Never against the judged deployment.
 
 ## 5. Ship
 

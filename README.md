@@ -102,7 +102,10 @@ Open <http://localhost:3000>. The judge journey runs against any deployment:
 npm run e2e
 ```
 
-Set `E2E_PAID=1` to include the one paid test. Set `BASE_URL` to point it at a deployment.
+Set `E2E_PAID=1` to include the paid tests. Set `BASE_URL` to point it at a deployment. The
+workbench test runs a real dossier whenever the environment it hits has a budget, so run it
+locally with `DAILY_CALL_BUDGET=0` to keep the journey free, and do not point it at a deployment
+whose calls are being judged: scripted calls are not organic traffic.
 
 ## Deploy
 
