@@ -474,7 +474,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  */
 async function withPaymentLock<T>(store: Store, fn: () => Promise<T>): Promise<T> {
   const key = "payment";
-  const deadline = Date.now() + 30_000;
+  const deadline = Date.now() + 20_000;
   let held = false;
   try {
     while (Date.now() < deadline) {
@@ -577,8 +577,11 @@ export async function runStep(spec: StepSpec, parsed: ParsedQuery, context: Cont
   let asks = 0;
   let paid = 0;
   let phrasing: 1 | 2 = 1;
+  // A step must answer inside one function invocation (180 s): no new ask starts after 75 s,
+  // so the worst case is 75 s + one 65 s ask + the lock wait.
+  const startedAt = Date.now();
   try {
-    while (asks < MAX_ASKS && paid < paidCap()) {
+    while (asks < MAX_ASKS && paid < paidCap() && (asks === 0 || Date.now() - startedAt < 75_000)) {
       const allowance = await checkAllowance(ctx.store, ctx.visitor);
       if (!allowance.ok) {
         if (asks === 0) return { ...base, status: "error", receipt: null, data: null, error: allowance.reason, attempts };
