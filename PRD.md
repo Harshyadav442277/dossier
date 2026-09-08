@@ -55,8 +55,8 @@ the status quo: the intelligence exists, in pieces, and nobody assembles it with
    Telegraph MCP client builds it, on the same pinned version. One `npm run live` proves it; do
    that before anything else (GAPS G1).
 3. **The router files a question under the wrong intent, or hands a link to a miner that
-   cannot fetch.** Mitigation: every step carries a list of intents it can accept and a second
-   phrasing; an answer that cannot be used is marked *unusable* and the second phrasing is sent;
+   cannot fetch.** Mitigation: every step carries a list of intents it can accept and two to
+   four wordings; an answer that cannot be used is marked *unusable* and the next wording is sent;
    an answer under an unaccepted intent is marked *off-target* and, for steps where a wrong
    intent would mislead (extraction, detection, fact-check, translation), never used. All of it
    is on the receipt.
@@ -67,7 +67,7 @@ the status quo: the intelligence exists, in pieces, and nobody assembles it with
    function.
 6. **Payments collide when two people run at once** (the facilitator rejects a second
    in-flight payment from one wallet). Mitigation: questions run one at a time per user; a
-   refused payment settles nothing and the second phrasing is a fresh attempt.
+   refused payment settles nothing and the next wording is a fresh attempt.
 7. **The wallet is drained or abused.** Mitigation: daily budget, per-browser allowance, a
    per-payment cap of $0.02 inside the x402 client (the router may pick a miner charging $0.20;
    the client then refuses for free), pause flag, and paid work off by default.

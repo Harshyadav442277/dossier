@@ -15,7 +15,7 @@ browser ──POST /api/plan──▶ parse the sentence, list the questions (fr
 
 ```
 lib/parse.ts      sentence → {mode, url, topic, language, region, category}
-lib/pipeline.ts   step specs, the two phrasings and context per step, runStep, summary
+lib/pipeline.ts   step specs, the two to four wordings per step, runStep, summary
 lib/adapters.ts   readers: how to understand each known miner's answer; generic fallback
 lib/telegraph.ts  node client: x402-paying auto-routed ask, catalogue (to name and rank what
                   the router chose), signals, balance
@@ -58,11 +58,18 @@ to that (GAPS G2). Every passage, target language and instruction is now in the 
 itself, worded so the engine can fill the miner's parameters from it (the translator wants the
 text in quotes; the briefing is worded as writing from notes, never as a search).
 
-**A4. Two wordings, up to four asks, one payment at a time.** Each step declares the intents
-it can accept. At most two asks are paid (one per wording); a free failure, meaning the node
-refusing, naming a miner it then calls unroutable, inventing an endpoint the miner does not
-declare, or a slow facilitator, does not count, up to four asks in all, because the router is
-probabilistic and asking again usually lands elsewhere. A timeout is never re-asked, because
+**A4. Two to four wordings, up to six asks, one payment at a time.** Each step declares the
+intents it can accept. At most two asks are paid; a free failure, meaning the node refusing,
+naming a miner it then calls unroutable, inventing an endpoint the miner does not declare, or
+a slow facilitator, does not count, up to six asks in all inside the step's 75-second window.
+The router's pick for one wording barely varies (the same refused miner came back for the same
+words every time on 2026-09-08), so the wordings are used in turn and a step whose intent has a
+large or flaky pool carries four of them. The router classifies by what the text is *about*, not
+what it asks for: a writing task whose notes name outlets and dates was filed as NEWS_SEARCH,
+RESEARCH_QUERY ("name the source of each point" is that intent's definition) and once, over an
+arrest in the notes, FRAUD_DETECTION. So a question built from earlier answers never repeats
+the reader's own query, never says news, headlines, coverage or source, and closes by restating
+the task. A timeout is never re-asked, because
 the call may still settle. A miner's answer that cannot serve the step is *unusable*; an answer
 filed under an intent the step cannot use is *off-target*; strict steps (extraction, detection,
 fact-check, translation, the briefing) never use an off-target answer, the others keep it and
@@ -70,7 +77,12 @@ say so. All questions from all visitors queue through one lock, because the faci
 refuses a second concurrent payment from the same wallet.
 
 **A5. Readers, not request builders.** The app cannot choose the miner, so it only has to
-understand answers. Known miners for each intent have an exact reader taken from their manifest
+understand answers. What a step hands on is read back without assuming which intent answered
+it: the router may give the headlines step to a NEWS_SEARCH miner (which files `articles`) and
+the search step to a NEWS_HEADLINES miner (`items`), and until 2026-09-08 the briefing read
+only the canonical shape and saw an empty list. `carriedArticles` reads both, strips the feed's
+HTML entities and " - Source" suffixes, and any news miner without a reader of its own is read
+by a generic one that finds the first titled list. Known miners for each intent have an exact reader taken from their manifest
 and live probes (an arXiv page read by the page extractor is parsed for title, authors and
 date; the AI-text leader's confidence is read as P(AI-written); a translation engine's
 `translation: null` is *unusable*). Unknown miners are read through the generic receipt text

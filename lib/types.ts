@@ -94,8 +94,8 @@ export interface Receipt {
 }
 
 export interface Attempt {
-  /** Which wording was sent: the step's first phrasing or its second. */
-  phrasing: 1 | 2;
+  /** Which of the step's wordings was sent, counted from 1. */
+  phrasing: number;
   minerSlug: string;
   minerRank: number | null;
   intent: string | null;

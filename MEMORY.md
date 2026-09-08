@@ -65,6 +65,35 @@ Read first every session. Keep it short: decisions and why, lessons and what the
 - Two unit tests caught my own helpers: the numbered-title regex ran across a quoted title, and
   the claim picker preferred "we propose" over "experiments show". Ten minutes each.
 
+## 2026-09-08 — After the deadline: the briefing
+
+**The report.** "Many recent calls fail; the errors come from passing one miner's result into
+another miner's question." True for news mode only: headlines → search → briefing → translation
+is the one chain where a miner's answer is embedded in the next question. Research and safety
+steps work from the page or the pasted text.
+
+**Decisions**
+- A step's carried data is read without assuming which intent answered it (`carriedArticles`
+  reads `items` and `articles`; a generic reader covers news miners without one).
+- The briefing is four wordings of a rewriting task: no "news", "headlines", "coverage" or
+  "source", never the reader's own query, a closing line that restates the task. Up to six asks
+  per step, still two paid.
+- No fallback outside the router when the node refuses every pick; the step fails and says so.
+
+**Lessons, each paid for or free**
+- The router classifies by what the text is about. Notes with outlets and dates read as a
+  search; "name the source of each point" reads as RESEARCH_QUERY; an arrest in the notes read
+  as FRAUD_DETECTION. Say what to *do* with the text, at the start and again at the end.
+- The router's pick for one wording is nearly fixed. Re-asking in the same words returns the
+  same refused miner; a different wording is a different draw.
+- "not currently routable" is free (checked on chain), transient, per miner, and not visible in
+  anything the catalogue or the dispatcher publishes (G23). It took eight probes to know that.
+- One paid probe of the router's own TEXT_GENERATION example ("Rewrite this paragraph to sound
+  more formal") answered at once; the same task with 1,200 characters of notes did not. Length
+  and content, not the verb, decide the pick.
+- A 60-second 504 from the node's gateway may or may not have settled; check Blockscout before
+  assuming either.
+
 ## 2026-09-07 — Ship day
 
 **State at 17:10 UTC.** Live on three doors: web <https://dossier-wukong4.vercel.app>, MCP

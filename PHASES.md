@@ -57,6 +57,12 @@ Claude Code); @My_Dossier_bot with webhook, progress editing and a first real ru
 work from the production ledger: LaTeX stripping, no context hints, four asks per step, payment
 lock, 180 s bound. 71 unit tests; journey suite 11 tests.
 
+## Phase 5 — After the deadline: the briefing chain, 2026-09-08 — done
+
+The one place a miner's answer feeds the next question. Carried data read in either shape, a
+generic news reader, four rewriting-task wordings, six asks per step, translation falling back
+to titles. 75 unit tests; eight paid wording probes all filed as writing (GAPS G23, G24).
+
 ## Phase 4 — Distribution, until the deadline
 
 - Three X updates from docs/x-updates.md with real dossier links and ledger numbers, each tagged

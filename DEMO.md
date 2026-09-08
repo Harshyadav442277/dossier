@@ -82,15 +82,18 @@ source      FREE  “Attention Is All You Need” · Vaswani, Ashish, Shazeer, N
 ```
 
 A step may show `ERROR` with the reason and whether anything was charged, or list a first ask
-that was *unusable* or *off-target* followed by the second phrasing. The exit code is 0 when at
+that was *unusable* or *off-target* followed by the next wording. The exit code is 0 when at
 least half the steps answered.
 
 ```bash
 npm run live -- news "AI regulation in India, in Hindi"
 ```
 
-Expected: four questions; `headlines` and `search` routed to news miners, `brief` to a
-CHAT_COMPLETION miner, `translate` to a LANGUAGE_TRANSLATION miner.
+Expected: four questions; `headlines` and `search` routed to news miners (either may land on
+NEWS_HEADLINES or NEWS_SEARCH; the briefing reads both shapes), `brief` to a writing miner
+(CHAT_COMPLETION, TEXT_GENERATION, LANGUAGE_GENERATION or RESEARCH_SYNTHESIS), `translate` to
+a LANGUAGE_TRANSLATION miner. When the node refuses the router's picks (GAPS G23) the briefing
+fails after up to six free asks and the translation falls back to the headline titles.
 
 ## 3. The site
 
@@ -106,7 +109,7 @@ npm run dev
    time: a spinner, then a stamp (`read`, `human_written`, `RECHECK`, `SUPPORTED`, `found`,
    `translated` …), a receipt block (miner and rank, routed as, confidence bar, cost and
    latency, signal link, settlement link, the router's reasoning) and the answer. A step that
-   needed its second phrasing lists both asks under the receipt.
+   needed another wording lists every ask under the receipt.
 4. The paper card fills with title, authors, year, abstract, and the abstract in Hindi. The
    verdict grid shows Authorship, Fraud record, Key claim, Provenance.
 5. The case summary lists one line per step and the totals: `8 Telegraph calls · 8 steps

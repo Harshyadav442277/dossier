@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseQuery } from "@/lib/parse";
-import { buildPlan, clipSentences, deriveInput, keySentence, metaOf, NEWS_STEPS, RESEARCH_STEPS, SAFETY_STEPS, summarize } from "@/lib/pipeline";
+import { buildPlan, clipSentences, dateOf, deriveInput, keySentence, metaOf, NEWS_STEPS, proseForTranslation, RESEARCH_STEPS, SAFETY_STEPS, subjectOf, summarize } from "@/lib/pipeline";
 import type { StepResult } from "@/lib/types";
 
 const ABSTRACT =
@@ -34,9 +34,10 @@ describe("inputs", () => {
     expect("context" in d ? d.context : undefined).toBeUndefined();
     expect(await deriveInput(spec("extract"), parsed, {})).toHaveProperty("skip");
   });
-  it("asks for a plain-words summary with the abstract as chat context", async () => {
+  it("asks for a plain-words summary as a rewriting task that never says research", async () => {
     const d = await deriveInput(spec("summary"), parsed, ctx);
-    expect("queries" in d && d.queries[0]).toMatch(/^You explain research to non-specialists/);
+    expect("queries" in d && d.queries[0]).toMatch(/^Rewrite the following abstract as three plain sentences/);
+    expect("queries" in d && d.queries[0]).not.toMatch(/research|paper/i);
     expect("queries" in d && d.queries[0]).toMatch(/Title: Attention Is All You Need\. Abstract: The dominant/);
     expect("context" in d ? d.context : undefined).toBeUndefined();
   });
@@ -64,16 +65,49 @@ describe("inputs", () => {
     expect("queries" in d && d.queries[1]).toMatch(/(hi)/);
     expect(clipSentences("One. Two. Three.", 9)).toEqual({ text: "One. Two.", truncated: true });
   });
-  it("words the briefing as a writing task from notes, never as a search", async () => {
-    const news = parseQuery("news", "AI regulation in India");
+  it("words the briefing as a rewriting task from notes, never as a search, whichever shape the notes arrived in", async () => {
+    const news = parseQuery("news", "China Top headlines and news in Hindi");
     const brief = NEWS_STEPS.find((s) => s.id === "brief")!;
-    const d = await deriveInput(brief, news, { headlines: { items: [{ title: "H1", source: "BBC" }] }, search: { articles: [{ title: "A1", source: "Reuters", description: "d" }] } });
-    expect("queries" in d && d.queries[0]).toMatch(/^You are a careful analyst writing from notes\. Write a briefing of 120 to 180 words/);
-    expect("queries" in d && d.queries[0]).toMatch(/Subject: AI regulation in India\. Do not look anything up\./);
-    expect("queries" in d && d.queries[0]).not.toMatch(/news|headline|coverage/i);
-    expect("queries" in d && d.queries[0]).toMatch(/H1 \(BBC\)[\s\S]*A1 \(Reuters\)/);
+    // The headlines step answered by a NEWS_SEARCH miner (`articles`), the search step by a NEWS_HEADLINES miner (`items`).
+    const d = await deriveInput(brief, news, {
+      headlines: { articles: [{ title: "H1 - BBC", source: "BBC", published: "Tue, 08 Sep 2026 04:08:44 GMT", description: "H1 &nbsp;&nbsp; BBC" }], answer: null },
+      search: { items: [{ title: "A1", source: "Reuters", published: "2026-09-01T10:00:00Z", description: "What A1 says &amp; why" }, { title: "H1", source: "BBC" }] },
+    });
+    const q = "queries" in d ? d.queries[0] : "";
+    expect(q).toMatch(/^Rewrite the following notes as a briefing of 120 to 180 words/);
+    expect(q).not.toMatch(/news|headline|coverage|article|reader's question/i);
+    expect(q).not.toContain(news.query);
+    expect(q).toContain("- H1 (BBC, 2026-09-08)\n- A1 (Reuters, 2026-09-01): What A1 says & why");
+    expect(q).not.toContain("&nbsp;");
+    expect("queries" in d ? d.queries[1] : "").toMatch(/^Turn these notes on China into one paragraph/);
+    expect("queries" in d ? d.queries.length : 0).toBe(4);
+    for (const w of "queries" in d ? d.queries : []) expect(w).not.toMatch(/news|headline|coverage|source|cite|look anything up/i);
     expect("context" in d ? d.context : undefined).toBeUndefined();
     expect(await deriveInput(brief, news, {})).toHaveProperty("skip");
+    // A search miner's one-line answer is the note when no article came back at all.
+    const thin = await deriveInput(brief, news, { search: { articles: [], answer: "Recent items include X from Y." } });
+    expect("queries" in thin ? thin.queries[0] : "").toContain("- Recent items include X from Y.");
+  });
+  it("strips the words that ask for a search from the subject", () => {
+    expect(subjectOf('Headlines "Flood"')).toBe("Flood");
+    expect(subjectOf("China Top headlines and news")).toBe("China");
+    expect(subjectOf("Headlines about Human trafficking")).toBe("Human trafficking");
+    expect(subjectOf("Crime headlines")).toBe("Crime");
+    expect(subjectOf("AI regulation")).toBe("AI regulation");
+    expect(subjectOf("Worldwide headlines")).toBe("Worldwide");
+    expect(subjectOf("headlines")).toBeNull();
+    expect(dateOf("Tue, 08 Sep 2026 04:08:44 GMT")).toBe("2026-09-08");
+    expect(dateOf("not a date at all")).toBe("not a date");
+    expect(proseForTranslation("## Brief\n\n**Bold** point.\n- one\n- two")).toBe("Brief Bold point. one two");
+  });
+  it("translates the briefing as plain prose, else the titles the earlier steps carried in either shape", async () => {
+    const news = parseQuery("news", "AI regulation in India in Spanish");
+    const translate = NEWS_STEPS.find((s) => s.id === "translate")!;
+    const withBrief = await deriveInput(translate, news, { brief: { text: "**Bold** lead. Second sentence." } });
+    expect("queries" in withBrief ? withBrief.queries[0] : "").toBe('Translate "Bold lead. Second sentence." into Spanish.');
+    const fromArticles = await deriveInput(translate, news, { headlines: { articles: [{ title: "H1 - BBC", source: "BBC" }] }, search: { items: [{ title: "A1." }] } });
+    expect("queries" in fromArticles ? fromArticles.queries[0] : "").toBe('Translate "H1. A1" into Spanish.');
+    expect(await deriveInput(translate, news, { headlines: { articles: [] } })).toHaveProperty("skip");
   });
   it("phrases headlines and search with the region", async () => {
     const news = parseQuery("news", "AI regulation in India");

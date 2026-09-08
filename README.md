@@ -133,6 +133,9 @@ absolute. Without Redis everything still works, in memory, per instance.
   itself is read by Dossier from its metadata tags, free and labelled as such, and every paid
   question works on that abstract. The router still decides every miner; a question filed
   under a neighbouring intent is shown as off-target and asked once more in different words.
+- The node sometimes refuses the miner its own router picked ("not currently routable"). It
+  costs nothing and the question is asked again in other words, up to six times; when every
+  pick for that intent is refused, the step fails and says so (GAPS G23).
 - `CONTENT_VERIFICATION` currently has a single miner on the network and it verifies images.
   The provenance question is put to the router as written; it usually lands on an academic
   search or a fact-check, and the receipt says which.

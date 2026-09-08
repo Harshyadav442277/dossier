@@ -103,6 +103,82 @@ function articlesOf(list: unknown[], map: (a: Rec) => Article): Article[] {
   return list.map((x) => map(rec(x))).filter((a) => a.title);
 }
 
+/**
+ * A feed's leftovers, removed before text is carried into the next question: HTML tags and
+ * entities (Google News blurbs are "Title &nbsp;&nbsp; Source"), backslashes (they break the
+ * router's own JSON) and runs of whitespace.
+ */
+export function cleanNote(s: string | null | undefined): string | null {
+  if (!s) return null;
+  const t = s
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
+    .replace(/\\/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return t || null;
+}
+
+function normTitle(t: string): string {
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/** One article in whichever shape a news miner uses: newsapi nests the source, others flatten it; the date key varies. */
+export function newsArticle(a: Rec): Article {
+  const source = str(a["source"]) ?? str(rec(a["source"])["name"]);
+  return {
+    title: str(a["title"]) ?? str(a["headline"]) ?? "",
+    source,
+    url: str(a["url"]) ?? str(a["link"]),
+    published: str(a["published_at"]) ?? str(a["publishedAt"]) ?? str(a["published"]) ?? str(a["published_date"]) ?? str(a["date"]),
+    description: str(a["description"]) ?? str(a["content"]) ?? str(a["snippet"]) ?? str(a["summary"]),
+  };
+}
+
+/**
+ * The articles a finished news step carries, whichever intent answered it: a headlines miner
+ * files them as `items`, a search miner as `articles`. Titles are cleaned, a Google News
+ * " - Source" suffix is dropped when the source is named beside it, a blurb that only repeats
+ * the title is dropped, and duplicates go.
+ */
+export function carriedArticles(data: unknown): Article[] {
+  const d = rec(data);
+  const seen = new Set<string>();
+  const out: Article[] = [];
+  for (const x of [...arr(d["items"]), ...arr(d["articles"])]) {
+    const a = rec(x);
+    const raw = cleanNote(str(a["title"]));
+    if (!raw) continue;
+    const source = cleanNote(str(a["source"]) ?? str(rec(a["source"])["name"]));
+    const title = source && raw.toLowerCase().endsWith(` - ${source.toLowerCase()}`) ? raw.slice(0, raw.length - source.length - 3).trim() || raw : raw;
+    const key = normTitle(title);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const blurb = cleanNote(str(a["description"]));
+    const description = blurb && !normTitle(blurb).startsWith(key.slice(0, 40)) ? blurb : null;
+    out.push({ title, source, url: str(a["url"]), published: str(a["published"]) ?? str(a["published_at"]) ?? str(a["publishedAt"]), description });
+  }
+  return out;
+}
+
+/** Any news miner without a reader of its own: the first array of titled items under a usual key, else the answer text. */
+export const genericNews: Reader = (result) => {
+  const r = rec(result);
+  for (const key of ["articles", "items", "results", "headlines", "stories", "news"]) {
+    const articles = articlesOf(arr(r[key]), newsArticle);
+    if (articles.length) return { label: `${articles.length} articles`, confidence: toConfidence(r["confidence"]), answer: str(r["summary"]) ?? str(r["answer"]) ?? listText(articles), data: { articles, answer: str(r["summary"]) ?? str(r["answer"]) } };
+  }
+  const answer = str(r["summary"]) ?? str(r["answer"]);
+  if (!answer) return { unusable: "no articles came back." };
+  return { label: null, answer, data: { articles: [], answer } };
+};
+
 const CONTENT_EXTRACTION: Record<string, Reader> = {
   "netwire-content-extraction": (result, input) => {
     const r = rec(result);
@@ -307,6 +383,8 @@ const NEWS_SEARCH: Record<string, Reader> = {
     return { label: `${articles.length} articles`, answer: listText(articles), data: { articles, answer: null } };
   },
   newsapi: NEWS_HEADLINES["newsapi"]!,
+  // Google News read: `articles` with title, source, url and publish date, and a one-line summary.
+  "newswire-search": genericNews,
 };
 
 const CHAT_COMPLETION: Record<string, Reader> = {
@@ -351,9 +429,12 @@ export const READERS: Record<string, Record<string, Reader>> = {
 };
 
 /** The reader for what the router chose, by the intent it chose and the miner it picked. Null means "read generically". */
+/** Intents whose answers share a shape closely enough that an unknown miner can still be read. */
+const GENERIC: Record<string, Reader> = { NEWS_SEARCH: genericNews, NEWS_HEADLINES: genericNews };
+
 export function readerFor(intent: string | null, slug: string | null): Reader | null {
   if (!intent || !slug) return null;
-  return READERS[intent]?.[slug] ?? null;
+  return READERS[intent]?.[slug] ?? GENERIC[intent] ?? null;
 }
 
 /**

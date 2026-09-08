@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arxivFromExcerpt, cleanTitle, fallbackData, READERS, readerFor, splitAuthors, titlesFromProse } from "@/lib/adapters";
+import { arxivFromExcerpt, carriedArticles, cleanNote, cleanTitle, fallbackData, genericNews, READERS, readerFor, splitAuthors, titlesFromProse } from "@/lib/adapters";
 
 const ARXIV_EXCERPT =
   "Skip to main content Search Submit Donate Log in Search arXiv Press Enter to search &middot; Advanced search -- Computer Science Computation and Language arXiv:1706.03762 (cs) [Submitted on 12 Jun 2017 ( v1 ), last revised 2 Aug 2023 (this version, v7)] Title: Attention Is All You Need Authors: Ashish Vaswani , Noam Shazeer , Niki Parmar , Jakob Uszkoreit View a PDF of the paper titled Attention Is All You Need, by Ashish Vaswani";
@@ -56,6 +56,28 @@ describe("news readers", () => {
   it("verity articles carry source and description", () => {
     const p = READERS.NEWS_SEARCH!["verity-news-search"]!({ articles: [{ title: "T", url: "u", published_at: "d", source: "s", description: "x" }], answer: "ans", confidence: 0.9 }, {});
     expect(p.data).toMatchObject({ articles: [{ title: "T", source: "s", url: "u", description: "x" }], answer: "ans" });
+  });
+  it("newswire-search and any unknown news miner: the first titled list under a usual key, in either date form", () => {
+    const r = READERS.NEWS_SEARCH!["newswire-search"]!;
+    const p = r({ articles: [{ title: "T - Src", source: "Src", url: "u", published_at: "Tue, 08 Sep 2026 04:08:44 GMT" }], summary: "One line.", confidence: 0.96 }, {});
+    expect(p.data).toMatchObject({ articles: [{ title: "T - Src", source: "Src", url: "u", published: "Tue, 08 Sep 2026 04:08:44 GMT" }], answer: "One line." });
+    expect(p.answer).toBe("One line.");
+    expect(readerFor("NEWS_HEADLINES", "someone-new")).toBe(genericNews);
+    expect(genericNews({ results: [{ headline: "H", source: { name: "N" }, link: "l", date: "2026-09-01" }] }, {}).data).toMatchObject({ articles: [{ title: "H", source: "N", url: "l", published: "2026-09-01" }] });
+    expect(genericNews({ summary: "Nothing matched." }, {}).data).toEqual({ articles: [], answer: "Nothing matched." });
+    expect(genericNews({ articles: [] }, {}).unusable).toBeTruthy();
+  });
+  it("carried articles read both shapes, drop the feed's leftovers and the duplicates", () => {
+    const got = carriedArticles({
+      items: [{ title: "Rates rise - The Times", source: "The Times", published: "2026-09-08", description: "Rates rise &nbsp;&nbsp; The Times" }],
+      articles: [{ title: "Rates Rise", source: { name: "The Times" } }, { title: "Bank fined &amp; warned", source: "FT", description: "<p>Detail \\here</p>" }, { title: "" }],
+    });
+    expect(got).toEqual([
+      { title: "Rates rise", source: "The Times", url: null, published: "2026-09-08", description: null },
+      { title: "Bank fined & warned", source: "FT", url: null, published: null, description: "Detail here" },
+    ]);
+    expect(cleanNote("  a &#39;b&#39; <b>c</b>\\d  ")).toBe("a 'b' c d");
+    expect(cleanNote("")).toBeNull();
   });
   it("groq output is the briefing text", () => {
     expect(READERS.CHAT_COMPLETION!["groq-llama31-instant-miner"]!({ output: "Brief.", confidence: 0.8 }, {}).data).toEqual({ text: "Brief." });

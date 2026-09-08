@@ -1,4 +1,4 @@
-import type { Article } from "@/lib/adapters";
+import { carriedArticles, type Article } from "@/lib/adapters";
 import type { DossierSummary, Mode, ParsedQuery, Receipt, SourceRecord, StepResult } from "@/lib/types";
 import { safetyVerdict, toneOf } from "@/lib/verdict";
 
@@ -293,8 +293,10 @@ function ResearchFront({ steps, parsed, source, sourceError }: { steps: StepView
 
 function NewsFront({ steps, parsed }: { steps: StepView[]; parsed: ParsedQuery }) {
   const by = (id: string) => steps.find((s) => s.id === id);
-  const items = articles(rec(by("headlines")?.data)["items"]);
-  const found = articles(rec(by("search")?.data)["articles"]);
+  // Whichever intent answered each step: a headlines miner files `items`, a search miner `articles`.
+  const items = carriedArticles(by("headlines")?.data);
+  const seen = new Set(items.map((a) => a.title.toLowerCase()));
+  const found = carriedArticles(by("search")?.data).filter((a) => !seen.has(a.title.toLowerCase()));
   const brief = str(rec(by("brief")?.data)["text"]);
   const translation = str(rec(by("translate")?.data)["translation"]);
   if (!items.length && !found.length && !brief) return null;

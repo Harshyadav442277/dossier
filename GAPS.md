@@ -4,6 +4,18 @@ Read before trusting a claim. Newest first within each state.
 
 ## Open
 
+### G23 · The node refuses the miner its own router picked
+"routing failed: miner X is not currently routable for intent Y" is a 500 from the node after
+its router has classified the question and named a miner; nothing is charged (confirmed on
+chain for four such asks on 2026-09-08 04:47 UTC and eight probes at 08:0x–08:2x). It is not
+the miner's activation status, its rank, its score, its dispatcher route or its host: refused
+miners and answering miners look identical in the catalogue. It comes and goes per miner
+(qarinah-proofpack was refused twice on 2026-09-07 and answered fine on 2026-09-08). The pick for
+a given wording barely varies, so the app now carries four wordings for the briefing and asks up
+to six times; when the pool for the intent the router keeps choosing is down (scholarwire's
+RESEARCH_SYNTHESIS worker and the OmniRoute chat tunnel, all morning on 2026-09-08), the step
+still fails and says so. Worth reporting to the organisers with the signal-free 500 bodies.
+
 ### G22 · Eight settlements on chain that are not on the ledger
 Between 17:35 and 17:41 UTC on 2026-09-07 a local run of the judge journey, with the production
 payer key and a budget in `.env.local`, made eight routed calls ($0.08) that were recorded in the
@@ -15,8 +27,9 @@ Guard added to README and DEMO: run the journey with `DAILY_CALL_BUDGET=0`.
 Over 120 production rows on 2026-09-06/07: 72 answered; the rest were the router naming a miner
 the node then called unroutable (15), an endpoint the miner does not declare (5), 48-second
 timeouts (4), the facilitator timing out or refusing a second concurrent payment (5), and the
-LaTeX and `context` faults since fixed. The free ones are now retried up to four asks per step
-and payments are serialised (ARCHITECTURE A4); timeouts cannot be. Every failed step names its
+LaTeX and `context` faults since fixed. The free ones are now retried up to six asks per step
+in turn over two to four wordings, and payments are serialised (ARCHITECTURE A4); timeouts
+cannot be. Every failed step names its
 cause and says nothing was charged.
 
 ### G3 · The page is read by the app, not by the network
@@ -110,6 +123,18 @@ dossier. The MCP endpoint has been exercised end to end (initialize, tools/list,
 `dossier_safety` call) locally.
 
 ## Closed
+
+### G24 · The briefing was filed as a news search, and read an empty list — CLOSED 2026-09-08 08:40 UTC
+Every news briefing from 2026-09-07 17:10 UTC on ended as *off-target*: both wordings, with
+"Reader's question: News Headlines about …" and dated outlet lines inside them, went to
+NEWS_SEARCH or NEWS_HEADLINES miners, two paid asks each, no briefing (dossiers 7Yzy7dwh,
+NBpjxZ8e, OCWZUMxP). And when the headlines step had been answered by a NEWS_SEARCH miner, its
+`articles` were invisible to a briefing that read `items`, so the translation step then found
+"no text to translate yet" (kO8ihU4z). Fixed: shape-agnostic `carriedArticles`, a generic news
+reader, four writing-task wordings that never repeat the query or say news/headlines/source and
+close by restating the task, translation falling back to the titles. Eight paid probes of the
+new wordings were all filed as writing (CHAT_COMPLETION, RESEARCH_SYNTHESIS), none as a search;
+that they were then refused as unroutable is G23.
 
 ### G11 · Track 3 submission form — CLOSED 2026-09-07 17:20 UTC, form seen
 Five fields: X username, title, description, GitHub repo URL, live app URL. Closes 23:59:59 UTC.

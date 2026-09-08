@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { promises as dns } from "node:dns";
-import { fallbackData, readerFor, titlesFromProse, type Article, type Parsed, type StepInput } from "./adapters";
+import { carriedArticles, cleanNote, fallbackData, readerFor, titlesFromProse, type Article, type Parsed, type StepInput } from "./adapters";
 import { utcDay } from "./config";
 import { checkAllowance, noteAttempt } from "./guard";
 import { buildReceipt } from "./receipt";
@@ -14,8 +14,10 @@ import { safetyVerdict } from "./verdict";
  * One query becomes a fixed sequence of questions. Every question goes to Telegraph's own
  * router (POST /engine/v1/ask): the network classifies the intent and picks the miner; the
  * app never names one. Each step keeps the receipt and hands structured data to the steps
- * after it. A step has two phrasings: the second is sent only when the first was refused
- * for free, came back unusable, or was filed under an intent the step cannot use.
+ * after it, read back by intent-agnostic helpers because the router may have handed the step
+ * to any miner it accepts. A step has two to four wordings: the next is sent only when the
+ * one before was refused for free, came back unusable, or was filed under an intent the step
+ * cannot use.
  */
 const WRITING = ["CHAT_COMPLETION", "TEXT_GENERATION", "LANGUAGE_GENERATION", "RESEARCH_SYNTHESIS"];
 
@@ -84,10 +86,6 @@ export function metaOf(c: Context): Meta {
   return { title: plainText(str(s["title"])), authors: strs(s["authors"]), abstract: plainText(str(s["abstract"])), date: str(s["date"]), year: str(s["year"]) };
 }
 
-function articlesOf(v: unknown): Article[] {
-  return Array.isArray(v) ? (v as Article[]).filter((a) => a && typeof a.title === "string") : [];
-}
-
 export function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
@@ -125,14 +123,55 @@ function proseOf(meta: Meta): string | null {
   return meta.abstract;
 }
 
-const BRIEF_RULES =
-  "You are a careful analyst writing from notes. Write a briefing of 120 to 180 words using only the notes provided. Lead with what changed, name the source of each point in parentheses, and end with one line on what to watch next. If the notes are thin or off-topic, say so plainly instead of inventing detail.";
-const SUMMARY_RULES = "You explain research to non-specialists. Using only the abstract provided, write three plain sentences: what the paper claims, how it shows it, and why it matters. No jargon that the abstract does not explain.";
+/**
+ * The subject of a briefing, with the words that ask for a search taken out. The router files a
+ * question that says "news", "headlines" or "coverage" as NEWS_SEARCH or NEWS_HEADLINES even
+ * when it asks for writing (six briefings in a row on 2026-09-07), and a topic parsed from
+ * "China Top headlines and news" still carries them.
+ */
+export function subjectOf(topic: string | null | undefined): string | null {
+  if (!topic) return null;
+  const t = topic
+    .replace(/["“”]/g, "")
+    .replace(/\b(news|headlines?|coverage|stories|articles?|breaking|latest|top|today'?s?|current|recent|updates?)\b/gi, " ")
+    .replace(/\b(about|on|regarding|and|the|of)\b\s*$/i, " ")
+    .replace(/^\s*(about|on|regarding|and|the|of)\b/i, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return t || null;
+}
+
+/** A feed's date in whatever form, as YYYY-MM-DD; the raw prefix when it does not parse. */
+export function dateOf(published: string | null | undefined): string | null {
+  if (!published) return null;
+  const t = new Date(published);
+  return Number.isNaN(t.getTime()) ? published.slice(0, 10) : t.toISOString().slice(0, 10);
+}
+
+/** A chat miner's markdown, as plain sentences a translator can take. */
+export function proseForTranslation(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*|__|`+/g, "")
+    .replace(/^\s*[-*•]\s+/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Both summaries are worded as the router defines TEXT_GENERATION ("rewriting, summarising or
+// composing text"); a question that says "research" is filed as RESEARCH_SYNTHESIS and handed
+// to a search miner at an endpoint it does not have (2026-09-07).
+const SUMMARY_RULES = "Rewrite the following abstract as three plain sentences for a non-specialist: what it claims, how it shows it, and why it matters. Use only the abstract, and no jargon it does not explain.";
 
 export interface Derived {
   input: StepInput;
-  /** Two wordings of the same question; the second is used only when the first does not deliver. */
-  queries: [string, string];
+  /**
+   * Two to four wordings of the same question, used in turn: the next one is sent only when the
+   * one before was refused for free, came back unusable, or was filed under an intent the step
+   * cannot use. The router's choice is close to deterministic for one wording, so a re-ask in
+   * the same words tends to land on the same miner the node just refused.
+   */
+  queries: string[];
   /** Structured hints merged into the routed request body by the node. */
   context?: Record<string, unknown>;
 }
@@ -174,7 +213,10 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       // No context hint here: a chat miner the router picked rejected an extra `text` key (2026-09-06).
       return {
         input: { text, title: title ?? undefined },
-        queries: [`Extract the dates, quantities, named entities and events from: ${text}`, `Extract the key structured facts, numbers, names, dates and places, from the following text: ${text}`],
+        // The second wording follows the router's own CONTENT_EXTRACTION example ("Here's a receipt
+        // (as text): '…', extract …"); an abstract on its own reads as academic and was filed under
+        // ACADEMIC_SEARCH or RESEARCH_QUERY four times (2026-09-06/07).
+        queries: [`Extract the dates, quantities, named entities and events from: ${text}`, `Here is a passage (as text): "${text.replace(/"/g, "'")}". Extract the dates, quantities, named entities and events from it as structured fields.`],
       };
     }
     case "summary": {
@@ -241,9 +283,11 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
     }
     case "translate": {
       if (!parsed.language) return { skip: "No target language was asked for." };
-      const brief = str(rec(context.brief)["text"]);
-      const headlines = articlesOf(rec(context.headlines)["items"]).map((a) => a.title).join(". ");
-      const source = parsed.mode === "research" ? proseOf(meta) : (brief ?? headlines);
+      const brief = cleanNote(str(rec(context.brief)["text"]));
+      // Without a briefing, the titles the earlier steps carried, whichever intent answered them.
+      const titles = [...carriedArticles(context.headlines), ...carriedArticles(context.search)].map((a) => a.title.replace(/[.!?]$/, ""));
+      const headlines = [...new Set(titles)].slice(0, 12).join(". ");
+      const source = parsed.mode === "research" ? proseOf(meta) : brief ? proseForTranslation(brief) : headlines || null;
       if (!source) return { skip: "There is no text to translate yet." };
       const text = clipSentences(source, 700).text.replace(/"/g, "'");
       const lang = parsed.language;
@@ -269,27 +313,43 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       };
     }
     case "brief": {
-      const items = articlesOf(rec(context.headlines)["items"]);
-      const articles = articlesOf(rec(context.search)["articles"]);
-      const searchAnswer = str(rec(context.search)["answer"]);
-      if (!items.length && !articles.length && !searchAnswer) return { skip: "Neither headlines nor coverage came back, so there is nothing to brief on." };
-      // Worded as a writing task from notes: naming "news", "headlines" or "coverage" in the question
-      // made the router file it as a search and hand it to a search miner (observed 2026-09-06).
-      const lines: string[] = [`Subject: ${parsed.topic}${parsed.region ? ` (${parsed.region})` : ""}.`, `Reader's question: ${parsed.query}`];
-      if (items.length) {
-        lines.push("", "Items seen today:");
-        for (const a of items.slice(0, 8)) lines.push(`- ${a.title}${a.source ? ` (${a.source}${a.published ? `, ${a.published.slice(0, 10)}` : ""})` : ""}`);
-      }
-      if (articles.length || searchAnswer) {
-        lines.push("", "Items from the past week:");
-        if (searchAnswer) lines.push(`Note: ${searchAnswer.slice(0, 600)}`);
-        for (const a of articles.slice(0, 6)) lines.push(`- ${a.title}${a.source ? ` (${a.source}${a.published ? `, ${a.published.slice(0, 16)}` : ""})` : ""}${a.description ? `: ${a.description.slice(0, 240)}` : ""}`);
-      }
-      const material = lines.join("\n").slice(0, 6000);
-      const ask = `${BRIEF_RULES} Subject: ${parsed.topic}${where}. Do not look anything up.\n\nNotes:\n${material}`;
+      // What the two earlier steps carried, whichever intent answered them: a headlines miner
+      // files `items`, a search miner `articles`, and the router may hand either step to either.
+      const seen = carriedArticles(context.headlines);
+      const seenKeys = new Set(seen.map((a) => normTitle(a.title)));
+      const older = carriedArticles(context.search).filter((a) => !seenKeys.has(normTitle(a.title)));
+      const searchAnswer = cleanNote(str(rec(context.search)["answer"]));
+      if (!seen.length && !older.length && !searchAnswer) return { skip: "Neither headlines nor coverage came back, so there is nothing to brief on." };
+      // Worded as the router defines TEXT_GENERATION ("rewriting, summarising or composing text").
+      // The notes name no "news", "headlines" or "coverage", and the reader's own question is not
+      // repeated: with either in the text the router filed the writing task as a search and a
+      // search miner answered, six briefings in a row on 2026-09-07. Nor does the question ask
+      // to "name the source of each point": that is the router's definition of RESEARCH_QUERY,
+      // and both wordings went to a research miner the node then refused (2026-09-08).
+      const note = (a: Article) => {
+        const when = dateOf(a.published);
+        const by = a.source ? ` (${a.source}${when ? `, ${when}` : ""})` : when ? ` (${when})` : "";
+        return `- ${a.title}${by}${a.description ? `: ${a.description.slice(0, 200)}` : ""}`;
+      };
+      const lines: string[] = [];
+      for (const a of seen.slice(0, 8)) lines.push(note(a));
+      for (const a of older.slice(0, 6)) lines.push(note(a));
+      if (searchAnswer && !lines.length) lines.push(`- ${searchAnswer.slice(0, 500)}`);
+      const material = lines.join("\n").slice(0, 3500);
+      const subject = subjectOf(parsed.topic) ?? parsed.region ?? "the subject";
+      const on = `${subject}${where}`;
       return {
         input: { topic: parsed.topic ?? "" },
-        queries: [ask, `Summarise these notes into one paragraph of about 150 words, naming sources in parentheses. Do not look anything up.\n\nNotes:\n${material}`],
+        // Four wordings, because CHAT_COMPLETION has 533 miners and the router's pick for one
+        // wording barely varies: a fresh wording is a fresh draw when the node refuses the pick.
+        // Each wording closes by restating the task: the router classifies by what the text is
+        // about, and notes that mention an arrest were filed under FRAUD_DETECTION (2026-09-08).
+        queries: [
+          `Rewrite the following notes as a briefing of 120 to 180 words for a busy reader, in plain prose without bullet points. Keep the attributions in parentheses as they are and add nothing that is not in the notes. Lead with what changed and end with one line on what to watch next. If the notes are thin, say so plainly.\n\nNotes:\n${material}\n\nNow write the briefing, in prose.`,
+          `Turn these notes on ${on} into one paragraph of about 150 words in plain English, keeping the attributions in parentheses and adding nothing that is not in the notes.\n\nNotes:\n${material}\n\nNow write that paragraph.`,
+          `Draft a short briefing of 120 to 180 words from the notes below, as flowing prose for someone with one minute to read. Keep the attributions in parentheses and add nothing the notes do not say.\n\nNotes:\n${material}\n\nNow draft the briefing.`,
+          `Compose a plain-English paragraph of about 150 words from these notes on ${on}. Keep each attribution in parentheses, say what changed first, and finish with what to watch next.\n\nNotes:\n${material}\n\nNow compose the paragraph.`,
+        ],
       };
     }
     case "scan": {
@@ -499,11 +559,13 @@ async function askOnce(
   spec: StepSpec,
   parsed: ParsedQuery,
   derived: Derived,
-  phrasing: 1 | 2,
+  ask: number,
   ctx: RunContext,
   attempts: Attempt[],
 ): Promise<{ outcome: Outcome | null; usable: boolean; accepted: boolean; error: NodeError | null }> {
-  const query = phrasing === 1 ? derived.queries[0] : derived.queries[1];
+  // The wordings are used in turn and cycle when there are more asks than wordings.
+  const phrasing = ((ask - 1) % derived.queries.length) + 1;
+  const query = derived.queries[phrasing - 1] ?? derived.queries[0] ?? "";
   const started = Date.now();
   await noteAttempt(ctx.store, ctx.visitor);
   let raw: EngineResponse;
@@ -567,16 +629,16 @@ export async function runStep(spec: StepSpec, parsed: ParsedQuery, context: Cont
   const attempts: Attempt[] = [];
   let offTarget: Outcome | null = null;
   let lastError = "The network could not serve this step.";
-  // Up to two paid asks (one per wording). Free failures, a miner the node calls unroutable,
-  // an endpoint the router invented, a slow facilitator, do not count against that, up to
-  // four asks in all: the router is probabilistic, so asking again usually lands elsewhere.
-  const MAX_ASKS = 4;
+  // Up to two paid asks. Free failures, a miner the node calls unroutable, an endpoint the
+  // router invented, a slow facilitator, do not count against that, up to six asks in all
+  // inside the step's time window: the node refused four picks in a row for one briefing
+  // (2026-09-08), and each refusal costs nothing but about nine seconds.
+  const MAX_ASKS = 6;
   // Two paid asks, or three when both answers so far were unusable (the same translator without
   // the language pair can be picked twice in a row; a third ask usually lands elsewhere).
   const paidCap = () => (attempts.length >= 2 && attempts.slice(-2).every((a) => a.outcome === "unusable") ? 3 : 2);
   let asks = 0;
   let paid = 0;
-  let phrasing: 1 | 2 = 1;
   // A step must answer inside one function invocation (180 s): no new ask starts after 75 s,
   // so the worst case is 75 s + one 65 s ask + the lock wait.
   const startedAt = Date.now();
@@ -588,9 +650,8 @@ export async function runStep(spec: StepSpec, parsed: ParsedQuery, context: Cont
         lastError = allowance.reason ?? lastError;
         break;
       }
-      const r = await askOnce(spec, parsed, derived, phrasing, ctx, attempts);
+      const r = await askOnce(spec, parsed, derived, asks + 1, ctx, attempts);
       asks += 1;
-      phrasing = phrasing === 1 ? 2 : 1;
       if (r.error) {
         lastError = humanError(r.error);
         // A timeout has an unknown outcome and the call may still settle; never send the question again.
@@ -666,9 +727,9 @@ export function summarize(parsed: ParsedQuery, steps: StepResult[], source?: { t
     }
   } else {
     const hl = by("headlines");
-    if (hl?.status === "ok") lines.push(`${articlesOf(d("headlines")["items"]).length} headlines (${via(hl)}).`);
+    if (hl?.status === "ok") lines.push(`${carriedArticles(hl.data).length} headlines (${via(hl)}).`);
     const se = by("search");
-    if (se?.status === "ok") lines.push(`${articlesOf(d("search")["articles"]).length} recent articles (${via(se)}).`);
+    if (se?.status === "ok") lines.push(`${carriedArticles(se.data).length} recent articles (${via(se)}).`);
     const br = by("brief");
     if (br?.status === "ok") lines.push(`Briefing written by ${via(br)}.`);
   }

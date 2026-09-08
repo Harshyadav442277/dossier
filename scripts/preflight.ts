@@ -68,7 +68,8 @@ async function main() {
   for (const parsed of plans) {
     for (const s of buildPlan(parsed)) {
       const d = await deriveInput(s, parsed, SAMPLE_CONTEXT);
-      const q = "skip" in d ? `(skipped: ${d.skip})` : d.queries[0].replace(/\s+/g, " ").slice(0, 110) + (d.queries[0].length > 110 ? "…" : "");
+      const first = "skip" in d ? "" : (d.queries[0] ?? "");
+      const q = "skip" in d ? `(skipped: ${d.skip})` : first.replace(/\s+/g, " ").slice(0, 110) + (first.length > 110 ? "…" : "");
       let lead = "";
       try {
         const top = (await leaderboard(s.intent)).slice(0, 3);
