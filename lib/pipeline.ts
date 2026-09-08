@@ -346,7 +346,9 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
         // about, and notes that mention an arrest were filed under FRAUD_DETECTION (2026-09-08).
         queries: [
           `Rewrite the following notes as a briefing of 120 to 180 words for a busy reader, in plain prose without bullet points. Keep the attributions in parentheses as they are and add nothing that is not in the notes. Lead with what changed and end with one line on what to watch next. If the notes are thin, say so plainly.\n\nNotes:\n${material}\n\nNow write the briefing, in prose.`,
-          `Turn these notes on ${on} into one paragraph of about 150 words in plain English, keeping the attributions in parentheses and adding nothing that is not in the notes.\n\nNotes:\n${material}\n\nNow write that paragraph.`,
+          // "Turn these notes into…" was filed as FRAUD_DETECTION, RESEARCH_SYNTHESIS and, paid,
+          // CONTENT_EXTRACTION; "summarising" is a verb in the router's TEXT_GENERATION definition.
+          `Summarise these notes on ${on} in one paragraph of about 150 words in plain English, keeping the attributions in parentheses and adding nothing that is not in the notes.\n\nNotes:\n${material}\n\nNow write that paragraph.`,
           `Draft a short briefing of 120 to 180 words from the notes below, as flowing prose for someone with one minute to read. Keep the attributions in parentheses and add nothing the notes do not say.\n\nNotes:\n${material}\n\nNow draft the briefing.`,
           `Compose a plain-English paragraph of about 150 words from these notes on ${on}. Keep each attribution in parentheses, say what changed first, and finish with what to watch next.\n\nNotes:\n${material}\n\nNow compose the paragraph.`,
         ],

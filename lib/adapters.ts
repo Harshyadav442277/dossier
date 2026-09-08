@@ -179,8 +179,16 @@ export const genericNews: Reader = (result) => {
   return { label: null, answer, data: { articles: [], answer } };
 };
 
+/**
+ * The two page readers fetch a URL. When a step supplied text and no link, the router fills
+ * their URL parameter with a placeholder (it read example.com for the abstract, 2026-09-08), so
+ * whatever page comes back is not an answer to the step.
+ */
+const PAGE_NOT_TEXT = "this miner reads a page by URL, and the step supplied text; the router gave it a placeholder page instead.";
+
 const CONTENT_EXTRACTION: Record<string, Reader> = {
   "netwire-content-extraction": (result, input) => {
+    if (!input.url) return { unusable: PAGE_NOT_TEXT };
     const r = rec(result);
     const pageTitle = cleanTitle(str(r["title"]));
     const excerpt = str(r["excerpt"]) ?? str(r["summary"]);
@@ -194,7 +202,8 @@ const CONTENT_EXTRACTION: Record<string, Reader> = {
       data: { title, authors: ax.authors, abstract: null, date: ax.date, year: yearOf(ax.date), excerpt, charCount },
     };
   },
-  "microlink-url-extraction": (result) => {
+  "microlink-url-extraction": (result, input) => {
+    if (!input.url) return { unusable: PAGE_NOT_TEXT };
     const r = rec(result);
     const d = rec(r["data"] ?? r);
     const title = cleanTitle(str(d["title"]));

@@ -93,6 +93,14 @@ steps work from the page or the pasted text.
   and content, not the verb, decide the pick.
 - A 60-second 504 from the node's gateway may or may not have settled; check Blockscout before
   assuming either.
+- "Turn these notes into a paragraph" was filed as FRAUD_DETECTION, RESEARCH_SYNTHESIS and
+  CONTENT_EXTRACTION on three asks; verbs from the router's own definition (rewrite, summarise,
+  draft, compose) fare better than figurative ones.
+- When the router hands text to a miner that wants a URL, it invents one (example.com) and the
+  miner answers about that page with a 2xx. A reader must know what the step supplied, not just
+  what the miner returned.
+- Verified on production after the deploy: news 4/4 (oOFh2Vox, $0.05), research 8/8
+  (-EmNQajM, $0.09). Session spend including probes: $0.18.
 
 ## 2026-09-07 — Ship day
 

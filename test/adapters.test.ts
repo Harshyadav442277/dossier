@@ -8,13 +8,16 @@ describe("content extraction readers", () => {
   it("netwire: reads title, authors and date out of an arXiv excerpt", () => {
     const parsed = READERS.CONTENT_EXTRACTION!["netwire-content-extraction"]!({ title: "[1706.03762] Attention Is All You Need", excerpt: ARXIV_EXCERPT, char_count: 4930 }, { url: "https://arxiv.org/abs/1706.03762" });
     expect(parsed.data).toMatchObject({ title: "Attention Is All You Need", authors: ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit"], date: "12 Jun 2017", year: "2017", charCount: 4930, abstract: null });
-    expect(READERS.CONTENT_EXTRACTION!["netwire-content-extraction"]!({}, {}).unusable).toBeTruthy();
+    expect(READERS.CONTENT_EXTRACTION!["netwire-content-extraction"]!({}, { url: "https://arxiv.org/abs/1706.03762" }).unusable).toBeTruthy();
+    // A step that supplied text and no link: the router filled the URL with a placeholder page.
+    expect(READERS.CONTENT_EXTRACTION!["netwire-content-extraction"]!({ title: "Example Domain", excerpt: "This domain is for use in documentation examples", char_count: 112 }, { text: "An abstract." }).unusable).toMatch(/placeholder/);
   });
 
   it("microlink: yields the bibliographic record", () => {
-    const parsed = READERS.CONTENT_EXTRACTION!["microlink-url-extraction"]!({ status: "success", data: { title: "Attention Is All You Need", author: "Vaswani, Ashish", description: "We propose the Transformer.", date: "2017-06-12T00:00:00.000Z" } }, {});
+    const parsed = READERS.CONTENT_EXTRACTION!["microlink-url-extraction"]!({ status: "success", data: { title: "Attention Is All You Need", author: "Vaswani, Ashish", description: "We propose the Transformer.", date: "2017-06-12T00:00:00.000Z" } }, { url: "https://arxiv.org/abs/1706.03762" });
     expect(parsed.data).toMatchObject({ title: "Attention Is All You Need", authors: ["Vaswani, Ashish"], abstract: "We propose the Transformer.", year: "2017" });
-    expect(READERS.CONTENT_EXTRACTION!["microlink-url-extraction"]!({ status: "fail" }, {}).unusable).toBeTruthy();
+    expect(READERS.CONTENT_EXTRACTION!["microlink-url-extraction"]!({ status: "fail" }, { url: "https://arxiv.org/abs/1706.03762" }).unusable).toBeTruthy();
+    expect(READERS.CONTENT_EXTRACTION!["microlink-url-extraction"]!({ status: "success", data: { title: "Example Domain" } }, { text: "An abstract." }).unusable).toMatch(/placeholder/);
   });
 
   it("livecert: structured fields become a flat list of facts", () => {

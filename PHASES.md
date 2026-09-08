@@ -61,7 +61,8 @@ lock, 180 s bound. 71 unit tests; journey suite 11 tests.
 
 The one place a miner's answer feeds the next question. Carried data read in either shape, a
 generic news reader, four rewriting-task wordings, six asks per step, translation falling back
-to titles. 75 unit tests; eight paid wording probes all filed as writing (GAPS G23, G24).
+to titles; page readers refuse a placeholder page. 75 unit tests; eight paid wording probes all
+filed as writing; production news 4/4 and research 8/8 after the deploy (GAPS G23, G24, G25).
 
 ## Phase 4 — Distribution, until the deadline
 

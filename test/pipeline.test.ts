@@ -79,7 +79,7 @@ describe("inputs", () => {
     expect(q).not.toContain(news.query);
     expect(q).toContain("- H1 (BBC, 2026-09-08)\n- A1 (Reuters, 2026-09-01): What A1 says & why");
     expect(q).not.toContain("&nbsp;");
-    expect("queries" in d ? d.queries[1] : "").toMatch(/^Turn these notes on China into one paragraph/);
+    expect("queries" in d ? d.queries[1] : "").toMatch(/^Summarise these notes on China in one paragraph/);
     expect("queries" in d ? d.queries.length : 0).toBe(4);
     for (const w of "queries" in d ? d.queries : []) expect(w).not.toMatch(/news|headline|coverage|source|cite|look anything up/i);
     expect("context" in d ? d.context : undefined).toBeUndefined();

@@ -16,6 +16,14 @@ to six times; when the pool for the intent the router keeps choosing is down (sc
 RESEARCH_SYNTHESIS worker and the OmniRoute chat tunnel, all morning on 2026-09-08), the step
 still fails and says so. Worth reporting to the organisers with the signal-free 500 bodies.
 
+### G25 · A page reader given text reads a placeholder page — CLOSED 2026-09-08 09:00 UTC
+On the research run -EmNQajM the router handed the extraction question (abstract as text) to
+netwire-content-extraction, a URL reader, and filled its URL parameter with example.com; the
+reader accepted "Example Domain" as a good read and the step reported 0 facts as *ok*, paid.
+Both page readers now answer *unusable* when the step supplied text and no link, so the next
+wording is sent. The other seven steps of that run answered first time (summary on groq under
+CHAT_COMPLETION with the reworded question; fraud needed its second wording).
+
 ### G22 · Eight settlements on chain that are not on the ledger
 Between 17:35 and 17:41 UTC on 2026-09-07 a local run of the judge journey, with the production
 payer key and a budget in `.env.local`, made eight routed calls ($0.08) that were recorded in the
@@ -134,7 +142,10 @@ NBpjxZ8e, OCWZUMxP). And when the headlines step had been answered by a NEWS_SEA
 reader, four writing-task wordings that never repeat the query or say news/headlines/source and
 close by restating the task, translation falling back to the titles. Eight paid probes of the
 new wordings were all filed as writing (CHAT_COMPLETION, RESEARCH_SYNTHESIS), none as a search;
-that they were then refused as unroutable is G23.
+that they were then refused as unroutable is G23. Verified on production at 08:50 UTC: dossier
+oOFh2Vox, four of four steps, the briefing written by litellm (LANGUAGE_GENERATION) on the third
+ask after a refusal and one paid off-target answer, translated into Spanish. The wording that
+was misfiled ("Turn these notes into…", CONTENT_EXTRACTION) now says "Summarise".
 
 ### G11 · Track 3 submission form — CLOSED 2026-09-07 17:20 UTC, form seen
 Five fields: X username, title, description, GitHub repo URL, live app URL. Closes 23:59:59 UTC.
