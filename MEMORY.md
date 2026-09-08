@@ -99,8 +99,10 @@ steps work from the page or the pasted text.
 - When the router hands text to a miner that wants a URL, it invents one (example.com) and the
   miner answers about that page with a 2xx. A reader must know what the step supplied, not just
   what the miner returned.
-- Verified on production after the deploy: news 4/4 (oOFh2Vox, $0.05), research 8/8
-  (-EmNQajM, $0.09). Session spend including probes: $0.18.
+- Verified on production after the deploys: news 4/4 (oOFh2Vox, $0.05; szo3WW15, $0.04, every
+  step on its first ask, briefing by groq under TEXT_GENERATION), research 8/8 (-EmNQajM, $0.09).
+  Session spend including probes: 22 settlements, $0.22, all on chain and (bar one probe) on the
+  ledger.
 
 ## 2026-09-07 — Ship day
 

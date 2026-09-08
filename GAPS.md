@@ -145,7 +145,8 @@ new wordings were all filed as writing (CHAT_COMPLETION, RESEARCH_SYNTHESIS), no
 that they were then refused as unroutable is G23. Verified on production at 08:50 UTC: dossier
 oOFh2Vox, four of four steps, the briefing written by litellm (LANGUAGE_GENERATION) on the third
 ask after a refusal and one paid off-target answer, translated into Spanish. The wording that
-was misfiled ("Turn these notes into…", CONTENT_EXTRACTION) now says "Summarise".
+was misfiled ("Turn these notes into…", CONTENT_EXTRACTION) now says "Summarise". After that
+deploy, szo3WW15 at 09:01 UTC: four steps, four asks, briefing by groq under TEXT_GENERATION.
 
 ### G11 · Track 3 submission form — CLOSED 2026-09-07 17:20 UTC, form seen
 Five fields: X username, title, description, GitHub repo URL, live app URL. Closes 23:59:59 UTC.
