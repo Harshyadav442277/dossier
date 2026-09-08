@@ -112,7 +112,13 @@ function payingFetch(): Fetcher {
 }
 
 function snippet(text: string): string {
-  return text.replace(/\s+/g, " ").trim().slice(0, 240);
+  const t = text.trim();
+  // Cloudflare's 504 page in front of the node is 5 KB of HTML; the title is all it says.
+  if (/^<!doctype html|^<html/i.test(t)) {
+    const title = t.match(/<title>([^<]*)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim();
+    return `an HTML error page${title ? ` (${title})` : ""}`;
+  }
+  return t.replace(/\s+/g, " ").slice(0, 240);
 }
 
 /**

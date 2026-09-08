@@ -454,6 +454,7 @@ function humanError(err: NodeError): string {
   const detail = err.message.replace(/^The node answered \d+:\s*/, "").slice(0, 220);
   if (/not currently routable/i.test(detail)) return `The router picked a miner the network then declared unroutable; nothing was charged (${detail}).`;
   if (/routing failed|routing decision/i.test(detail)) return `Telegraph's router could not classify this question; nothing was charged (${detail}).`;
+  if (err.status === 502 || err.status === 504) return `The node's gateway gave up after a minute without an answer (${err.status}). Nothing is charged unless the call settles late; the chain count would show it and the ledger would not.`;
   if (err.status !== null && err.status >= 500) return `The miner the router chose failed on its side; failed calls are not charged (${detail}).`;
   return err.message;
 }
