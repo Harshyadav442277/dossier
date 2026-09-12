@@ -279,6 +279,22 @@ const AI_TEXT_DETECTION: Record<string, Reader> = {
     if (!label || /no passage|not supplied|too short/i.test(str(r["reason"]) ?? "")) return { unusable: str(r["reason"]) ?? "no passage reached the miner." };
     return { label, confidence: toConfidence(r["confidence"]), answer: str(r["reason"]) ?? label, data: { label, pAi: null, model: "livecert statistics" } };
   },
+  // Bittensor subnet 32: `{answer: <P(AI) 0–1>, status: "success"}` and nothing else. Read raw,
+  // its label was "0" and its certainty 0% on a human-written abstract (2026-09-12).
+  "bittensor-sn32-itsai": (result) => {
+    const r = rec(result);
+    const p = toConfidence(r["answer"]);
+    if (p === null) return { unusable: `no probability came back (status ${str(r["status"]) ?? "unknown"}).` };
+    const ai = p >= 0.5;
+    const label = ai ? "ai_generated" : "human_written";
+    return {
+      label,
+      confidence: Number((ai ? p : 1 - p).toFixed(4)),
+      confidenceNote: `The miner reports P(AI-written) = ${(p * 100).toFixed(0)}%.`,
+      answer: `${label}: the ItsAI detector puts the probability that this passage is AI-written at ${(p * 100).toFixed(0)}%.`,
+      data: { label, pAi: p, model: "bittensor-sn32-itsai" },
+    };
+  },
   "veritarach-ai-text-detector": (result) => {
     const r = rec(result);
     const label = str(r["label"]) ?? str(r["verdict"]) ?? str(r["prediction"]);

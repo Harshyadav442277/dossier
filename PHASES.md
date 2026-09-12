@@ -63,7 +63,7 @@ The production ledger's 57 unusable rows since 09-09 were mostly the app's: a ne
 answers in prose, translators picked without the pair, topics with the question left in. Prose
 readers, four wordings on five steps, third paid ask only with a fresh wording, 480-character
 translations, curly quotes in them, TASK_COMPLETION in and RESEARCH_SYNTHESIS out of the writing
-intents, readers that refuse a fragment. 78 unit tests (GAPS G26–G30).
+intents, readers that refuse a fragment or a bare number. 79 unit tests (GAPS G26–G31).
 
 ## Phase 5 — After the deadline: the briefing chain, 2026-09-08 — done
 

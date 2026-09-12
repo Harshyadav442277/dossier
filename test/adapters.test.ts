@@ -37,6 +37,12 @@ describe("authorship reader", () => {
     expect(p.data).toMatchObject({ pAi: 0.2483, model: "caliber-truthport-v2" });
     expect(r({ confidence: 0.9, label: "ai_generated" }, {}).confidence).toBe(0.9);
   });
+  it("bittensor's bare probability becomes a verdict with certainty for it", () => {
+    const r = READERS.AI_TEXT_DETECTION!["bittensor-sn32-itsai"]!;
+    expect(r({ answer: 0, report_id: "x", segmentation_tokens: [], status: "success" }, {})).toMatchObject({ label: "human_written", confidence: 1, data: { pAi: 0 } });
+    expect(r({ answer: 0.83, status: "success" }, {})).toMatchObject({ label: "ai_generated", confidence: 0.83 });
+    expect(r({ status: "error" }, {}).unusable).toMatch(/no probability/);
+  });
   it("livecert says when no passage reached it", () => {
     expect(READERS.AI_TEXT_DETECTION!.livecert!({ verdict: "unknown", reason: "No passage long enough to analyse was supplied." }, {}).unusable).toBeTruthy();
   });

@@ -94,7 +94,10 @@ headline lists for topics the parser had mangled (G29). The errors were the netw
   given (length, language, the placeholder page of G25), not only against the miner's schema.
 - Straight quotes and apostrophes inside a quoted parameter end it early for a miner that
   parses its own question; send curly ones.
-- Verified on production after the deploy: news 4/4 first ask each (CicAhH4k, $0.04).
+- Verified on production after the deploys: news 4/4 first ask each (CicAhH4k, $0.04;
+  7bHSTNqE, $0.04, translation full length), research 8/8 (1ZRL5REt, $0.10). A miner's declared
+  signal mapping can point label and confidence at one bare number (G31); a reader per known
+  miner is still the only reliable read.
 
 ## 2026-09-08 — After the deadline: the briefing
 

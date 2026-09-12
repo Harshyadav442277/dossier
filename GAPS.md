@@ -157,6 +157,14 @@ MyMemory translators refuse text over 500 characters (two paid asks). Now: the t
 writing tasks for a language model, which the step accepts (routed as CHAT_COMPLETION or
 TEXT_GENERATION, shown as such).
 
+### G31 · The Bittensor detector's verdict shown as "0" — CLOSED 2026-09-12
+bittensor-sn32-itsai (#3 for AI_TEXT_DETECTION) answers `{answer: <P(AI) 0–1>, status:
+"success"}`; its declared signal mapping points label and confidence at `answer`, so the receipt
+read "0" with 0% certainty and the summary said "Authorship: 0". A reader now turns the
+probability into human_written or ai_generated with the certainty for that label, as for the
+caliber detector. Seen on the research run 1ZRL5REt (8/8, $0.10; extraction needed three asks:
+an off-target research answer refused, a node refusal, then a chat model's 20 facts).
+
 ### G30 · A translation cut at the first apostrophe — CLOSED 2026-09-12
 On the first production run after G26–G29 (CicAhH4k, four steps, four asks), the Ukrainian
 translation came back as four words: the #1 translator reads the text from the quotes and a
