@@ -357,24 +357,39 @@ const ACADEMIC_SEARCH: Record<string, Reader> = {
   },
 };
 
+/**
+ * A translation a fraction the length of its source is a fragment: a translator that reads
+ * the text from the quotes stopped at an apostrophe four words in (2026-09-12). Scripts differ
+ * in density, so only a large shortfall on a long source counts.
+ */
+export function translationTooShort(translation: string, source: string | undefined): boolean {
+  if (!source || source.length < 120) return false;
+  return translation.length < source.length * 0.25;
+}
+
+function translated(t: string, confidence: number | null, input: StepInput): Parsed {
+  if (translationTooShort(t, input.text)) return { unusable: `only a fragment came back (${t.length} characters for ${input.text?.length ?? 0}): "${t.slice(0, 80)}".` };
+  return { label: "translated", confidence, answer: t, data: { translation: t, language: input.language?.name ?? null } };
+}
+
 const LANGUAGE_TRANSLATION: Record<string, Reader> = {
   livecert: (result, input) => {
     const r = rec(result);
     const t = str(r["translation"]) ?? (str(r["verdict"]) === "translated" ? str(r["reason"]) : null);
     if (!t) return { unusable: str(r["reason"]) ?? "no translation came back." };
-    return { label: "translated", confidence: toConfidence(r["confidence"]), answer: t, data: { translation: t, language: input.language?.name ?? null } };
+    return translated(t, toConfidence(r["confidence"]), input);
   },
   "langwire-translation": (result, input) => {
     const r = rec(result);
     const t = str(r["translation"]);
     if (!t) return { unusable: str(r["summary"]) ?? "this miner does not support that language pair." };
-    return { label: "translated", confidence: toConfidence(r["confidence"]), answer: t, data: { translation: t, language: input.language?.name ?? null } };
+    return translated(t, toConfidence(r["confidence"]), input);
   },
   "mymemory-translate": (result, input) => {
     const r = rec(result);
     const t = str(getPath(r, "responseData.translatedText"));
     if (!t || /QUERY LENGTH|INVALID|NO QUERY|PLEASE SELECT/i.test(t)) return { unusable: t ?? "no translation came back." };
-    return { label: "translated", confidence: toConfidence(getPath(r, "responseData.match")), answer: t, data: { translation: t, language: input.language?.name ?? null } };
+    return translated(t, toConfidence(getPath(r, "responseData.match")), input);
   },
 };
 LANGUAGE_TRANSLATION["test-mymemory-translate"] = LANGUAGE_TRANSLATION["mymemory-translate"]!;

@@ -89,6 +89,12 @@ headline lists for topics the parser had mangled (G29). The errors were the netw
 - Leaderboards move: livecert took #1 or #2 on five intents in four days and added endpoints.
   Re-check `/api/miners?intent=` when a step's miner changes.
 - The parser's topic is what every question is built from; a bad topic fails four steps.
+- A 2xx with a plausible label is not a good answer: the Ukrainian translation was four words
+  long and marked *translated*. Readers must check the answer against the input they were
+  given (length, language, the placeholder page of G25), not only against the miner's schema.
+- Straight quotes and apostrophes inside a quoted parameter end it early for a miner that
+  parses its own question; send curly ones.
+- Verified on production after the deploy: news 4/4 first ask each (CicAhH4k, $0.04).
 
 ## 2026-09-08 — After the deadline: the briefing
 

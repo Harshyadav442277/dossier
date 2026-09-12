@@ -62,8 +62,8 @@ lock, 180 s bound. 71 unit tests; journey suite 11 tests.
 The production ledger's 57 unusable rows since 09-09 were mostly the app's: a news miner that
 answers in prose, translators picked without the pair, topics with the question left in. Prose
 readers, four wordings on five steps, third paid ask only with a fresh wording, 480-character
-translations, TASK_COMPLETION in and RESEARCH_SYNTHESIS out of the writing intents. 77 unit
-tests (GAPS G26–G29).
+translations, curly quotes in them, TASK_COMPLETION in and RESEARCH_SYNTHESIS out of the writing
+intents, readers that refuse a fragment. 78 unit tests (GAPS G26–G30).
 
 ## Phase 5 — After the deadline: the briefing chain, 2026-09-08 — done
 

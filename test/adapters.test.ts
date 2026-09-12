@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { articlesFromProse, arxivFromExcerpt, carriedArticles, cleanNote, cleanTitle, fallbackData, genericNews, READERS, readerFor, splitAuthors, titlesFromProse } from "@/lib/adapters";
+import { articlesFromProse, arxivFromExcerpt, carriedArticles, cleanNote, cleanTitle, fallbackData, genericNews, READERS, readerFor, splitAuthors, titlesFromProse, translationTooShort } from "@/lib/adapters";
 
 const ARXIV_EXCERPT =
   "Skip to main content Search Submit Donate Log in Search arXiv Press Enter to search &middot; Advanced search -- Computer Science Computation and Language arXiv:1706.03762 (cs) [Submitted on 12 Jun 2017 ( v1 ), last revised 2 Aug 2023 (this version, v7)] Title: Attention Is All You Need Authors: Ashish Vaswani , Noam Shazeer , Niki Parmar , Jakob Uszkoreit View a PDF of the paper titled Attention Is All You Need, by Ashish Vaswani";
@@ -47,6 +47,13 @@ describe("translation readers", () => {
     const l = READERS.LANGUAGE_TRANSLATION!.livecert!;
     expect(l({ verdict: "translated", confidence: 1, translation: "नमस्ते" }, { language: { name: "Hindi", code: "hi" } })).toMatchObject({ answer: "नमस्ते", data: { translation: "नमस्ते", language: "Hindi" } });
     expect(READERS.LANGUAGE_TRANSLATION!["langwire-translation"]!({ translation: null, supported: false, summary: "not available" }, {}).unusable).toBe("not available");
+  });
+  it("a fragment of a long source is unusable", () => {
+    const source = "Recent developments include NASA’s efforts to refine data from space telescopes using the Artifact InSPECtor tool, the discovery of a galactic gem by the Chandra X-ray Observatory, and remarks by Commissioner Lahbib in Moldova.";
+    const l = READERS.LANGUAGE_TRANSLATION!.livecert!;
+    expect(l({ verdict: "translated", translation: "Останні розробки включають NASA" }, { text: source, language: { name: "Ukrainian", code: "uk" } }).unusable).toMatch(/only a fragment/);
+    expect(l({ verdict: "translated", translation: "Останні розробки включають зусилля NASA щодо уточнення даних з космічних телескопів за допомогою інструменту Artifact InSPECtor, відкриття галактичної перлини обсерваторією Чандра та зауваження комісара Лахбіба в Молдові." }, { text: source, language: { name: "Ukrainian", code: "uk" } }).data).toMatchObject({ language: "Ukrainian" });
+    expect(translationTooShort("नमस्ते", "Good morning")).toBe(false);
   });
 });
 

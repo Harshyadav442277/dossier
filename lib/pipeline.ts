@@ -310,7 +310,9 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       if (!source) return { skip: "There is no text to translate yet." };
       // 480 characters: the MyMemory translators refuse anything over 500 ("QUERY LENGTH LIMIT
       // EXCEEDED", two paid asks on 2026-09-11) and the router may pick them for any language.
-      const text = clipSentences(source, 480).text.replace(/"/g, "'");
+      // Straight quotes and apostrophes become curly ones: the #1 translator reads the text from
+      // the quotes and stopped at the apostrophe in "NASA's", four words in (2026-09-12).
+      const text = clipSentences(source, 480).text.replace(/"/g, "”").replace(/'/g, "’");
       const lang = parsed.language;
       // Quoted first: the #1 translator reads the text from the quotes and answered "no text
       // supplied" to the bare form. The third and fourth wordings are writing tasks for a

@@ -123,8 +123,9 @@ describe("inputs", () => {
   it("translates the briefing as plain prose, else the titles the earlier steps carried in either shape", async () => {
     const news = parseQuery("news", "AI regulation in India in Spanish");
     const translate = NEWS_STEPS.find((s) => s.id === "translate")!;
-    const withBrief = await deriveInput(translate, news, { brief: { text: "**Bold** lead. Second sentence." } });
-    expect("queries" in withBrief ? withBrief.queries[0] : "").toBe('Translate "Bold lead. Second sentence." into Spanish.');
+    const withBrief = await deriveInput(translate, news, { brief: { text: "**Bold** lead. NASA's \"second\" sentence." } });
+    // Straight quotes and apostrophes go curly, so a translator reading from the quotes gets it all.
+    expect("queries" in withBrief ? withBrief.queries[0] : "").toBe("Translate \"Bold lead. NASA’s ”second” sentence.\" into Spanish.");
     const fromArticles = await deriveInput(translate, news, { headlines: { articles: [{ title: "H1 - BBC", source: "BBC" }] }, search: { items: [{ title: "A1." }] } });
     expect("queries" in fromArticles ? fromArticles.queries[0] : "").toBe('Translate "H1. A1" into Spanish.');
     expect(await deriveInput(translate, news, { headlines: { articles: [] } })).toHaveProperty("skip");

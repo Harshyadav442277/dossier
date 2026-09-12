@@ -157,6 +157,14 @@ MyMemory translators refuse text over 500 characters (two paid asks). Now: the t
 writing tasks for a language model, which the step accepts (routed as CHAT_COMPLETION or
 TEXT_GENERATION, shown as such).
 
+### G30 · A translation cut at the first apostrophe — CLOSED 2026-09-12
+On the first production run after G26–G29 (CicAhH4k, four steps, four asks), the Ukrainian
+translation came back as four words: the #1 translator reads the text from the quotes and a
+straight apostrophe in "NASA's" ended it. The step showed *translated* and the page showed a
+fragment. Now straight quotes and apostrophes are made curly before the text is embedded, and
+every translation reader marks an answer under a quarter of a long source's length as unusable
+("only a fragment came back"), so the next wording is sent.
+
 ### G29 · Topics with the question left in — CLOSED 2026-09-12
 "What's happening in South-America" became the topic "happening in South-America"; "Top
 technology headlines" kept "headlines"; quotes stayed in. Six dossiers on 2026-09-11 searched
