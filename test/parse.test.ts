@@ -96,5 +96,12 @@ describe("helpers", () => {
   });
   it("strips question scaffolding from topics", () => {
     expect(extractTopic("Give me the latest news about the Fed rate decision?")).toBe("Fed rate decision");
+    // Seen on 2026-09-11: "happening in", a trailing "headlines", quotes around the subject.
+    expect(extractTopic("what's happening in South-America?")).toBe("South-America");
+    expect(extractTopic("What's happening in Storage technology")).toBe("Storage technology");
+    expect(extractTopic("Top technology headlines")).toBe("technology");
+    expect(extractTopic("Sports headlines")).toBe("Sports");
+    expect(extractTopic('News Headlines "Flood"')).toBe("Flood");
+    expect(parseQuery("news", "Top technology headlines in the Middle east").topic).toBe("technology");
   });
 });

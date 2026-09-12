@@ -90,6 +90,28 @@ export function titlesFromProse(text: string): string[] {
   return [...new Set(out)];
 }
 
+/**
+ * Articles written out in prose, the way livecert's news search answers: `"Title" (Publisher,
+ * 11 September 2026); "Title" (Publisher)`. Straight or curly quotes; publisher and date optional.
+ */
+export function articlesFromProse(text: string): Article[] {
+  const out: Article[] = [];
+  const seen = new Set<string>();
+  for (const m of text.matchAll(/["“]([^"”]{8,300})["”]\s*(?:\(([^()]{1,160})\))?/g)) {
+    const title = m[1]?.trim();
+    if (!title || seen.has(title.toLowerCase())) continue;
+    seen.add(title.toLowerCase());
+    const inside = m[2]?.trim() ?? "";
+    const parts = inside.split(/,\s*(?=[^,]*$)/);
+    const last = parts.length > 1 ? parts[parts.length - 1]! : "";
+    const dated = /\b(19|20)\d{2}\b/.test(last) || /^\d{1,2}\s+\w+/.test(last);
+    const source = (dated ? parts.slice(0, -1).join(", ") : inside).trim() || null;
+    const published = dated ? last.trim() : /\b(19|20)\d{2}\b/.test(inside) && parts.length === 1 ? inside : null;
+    out.push({ title, source: published === inside ? null : source, url: null, published, description: null });
+  }
+  return out;
+}
+
 function papersFrom(result: unknown, prose: string): string[] {
   const r = rec(result);
   for (const l of [arr(r["papers"]), arr(r["results"]), arr(r["items"])]) {
@@ -167,15 +189,21 @@ export function carriedArticles(data: unknown): Article[] {
   return out;
 }
 
-/** Any news miner without a reader of its own: the first array of titled items under a usual key, else the answer text. */
+/**
+ * Any news miner without a reader of its own: the first array of titled items under a usual
+ * key; else articles quoted in its prose (summary, answer or reason); else the prose itself.
+ */
 export const genericNews: Reader = (result) => {
   const r = rec(result);
   for (const key of ["articles", "items", "results", "headlines", "stories", "news"]) {
     const articles = articlesOf(arr(r[key]), newsArticle);
     if (articles.length) return { label: `${articles.length} articles`, confidence: toConfidence(r["confidence"]), answer: str(r["summary"]) ?? str(r["answer"]) ?? listText(articles), data: { articles, answer: str(r["summary"]) ?? str(r["answer"]) } };
   }
-  const answer = str(r["summary"]) ?? str(r["answer"]);
+  const answer = str(r["summary"]) ?? str(r["answer"]) ?? str(r["reason"]);
   if (!answer) return { unusable: "no articles came back." };
+  const quoted = articlesFromProse(answer);
+  if (quoted.length) return { label: `${quoted.length} articles`, confidence: toConfidence(r["confidence"]), answer, data: { articles: quoted, answer } };
+  if (/\b(no (coverage|articles?|results?|matches)|nothing (was )?(published|found)|could not be (queried|reached)|not respond)/i.test(answer)) return { unusable: answer.slice(0, 200) };
   return { label: null, answer, data: { articles: [], answer } };
 };
 
@@ -394,6 +422,16 @@ const NEWS_SEARCH: Record<string, Reader> = {
   newsapi: NEWS_HEADLINES["newsapi"]!,
   // Google News read: `articles` with title, source, url and publish date, and a one-line summary.
   "newswire-search": genericNews,
+  // Answers in prose: `"Title" (Publisher, 11 September 2026); …` under `reason`, verdict
+  // "articles". Twenty-seven paid answers were read as empty before this reader (2026-09-09/11).
+  livecert: (result) => {
+    const r = rec(result);
+    const reason = str(r["reason"]) ?? "";
+    const verdict = str(r["verdict"]);
+    const articles = articlesFromProse(reason);
+    if (!articles.length) return { unusable: reason ? reason.slice(0, 200) : `no articles came back (verdict ${verdict ?? "none"}).` };
+    return { label: `${articles.length} articles`, confidence: toConfidence(r["confidence"]), answer: reason, data: { articles, answer: reason } };
+  },
 };
 
 const CHAT_COMPLETION: Record<string, Reader> = {

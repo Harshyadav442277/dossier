@@ -64,7 +64,8 @@ naming a miner it then calls unroutable, inventing an endpoint the miner does no
 a slow facilitator, does not count, up to six asks in all inside the step's 75-second window.
 The router's pick for one wording barely varies (the same refused miner came back for the same
 words every time on 2026-09-08), so the wordings are used in turn and a step whose intent has a
-large or flaky pool carries four of them. The router classifies by what the text is *about*, not
+large or flaky pool carries four of them; a third paid ask is allowed only when a wording not
+yet sent remains, since re-asking in words already sent draws the same miner. The router classifies by what the text is *about*, not
 what it asks for: a writing task whose notes name outlets and dates was filed as NEWS_SEARCH,
 RESEARCH_QUERY ("name the source of each point" is that intent's definition) and once, over an
 arrest in the notes, FRAUD_DETECTION. So a question built from earlier answers never repeats
@@ -82,7 +83,13 @@ it: the router may give the headlines step to a NEWS_SEARCH miner (which files `
 the search step to a NEWS_HEADLINES miner (`items`), and until 2026-09-08 the briefing read
 only the canonical shape and saw an empty list. `carriedArticles` reads both, strips the feed's
 HTML entities and " - Source" suffixes, and any news miner without a reader of its own is read
-by a generic one that finds the first titled list. Known miners for each intent have an exact reader taken from their manifest
+by a generic one that finds the first titled list, or the titles quoted in its prose: the #2
+NEWS_SEARCH miner answers in sentences, and 27 paid answers were read as empty before the
+reader learned that (GAPS G26). The writing intents a step accepts are CHAT_COMPLETION,
+TEXT_GENERATION, LANGUAGE_GENERATION and TASK_COMPLETION; never RESEARCH_SYNTHESIS, whose
+leader writes about the topic from Wikipedia and ignores the notes. Translation also accepts
+them: two of its four wordings are shaped for a language model, for the languages the
+dictionary translators lack. Known miners for each intent have an exact reader taken from their manifest
 and live probes (an arXiv page read by the page extractor is parsed for title, authors and
 date; the AI-text leader's confidence is read as P(AI-written); a translation engine's
 `translation: null` is *unusable*). Unknown miners are read through the generic receipt text

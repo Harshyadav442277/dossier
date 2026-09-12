@@ -87,8 +87,13 @@ const NEWS_LEAD =
   /^(?:(?:what(?:'s| is| are)?|whats|tell me|give me|show me|find|get|fetch|search|look up)\s+)?(?:the\s+)?(?:latest|recent|current|today'?s|top|breaking)?\s*(?:news|headlines?|coverage|stories|updates?|developments?)?\s*(?:about|on|regarding|around|for|of|with)?\s*/i;
 
 export function extractTopic(text: string): string | null {
-  let t = text.replace(URL_RE, " ").replace(/\s+/g, " ").trim();
+  let t = text.replace(URL_RE, " ").replace(/["“”]/g, " ").replace(/\s+/g, " ").trim();
+  // "What's happening in X" before the general lead, which would otherwise leave "happening in X"
+  // as the topic (six dossiers on 2026-09-11, none of whose searches found anything).
+  t = t.replace(/^(?:so\s+)?(?:what(?:'s| is|s)?\s+)?(?:happening|going on|new|up)\s+(?:with|in|on|about|around)?\s*/i, "").trim();
   t = t.replace(NEWS_LEAD, "").trim();
+  // A second news word after the first ("News Headlines about X").
+  t = t.replace(/^(?:news|headlines?|coverage|stories|updates?)\s+(?:about|on|regarding|for|of)?\s*/i, "").trim();
   t = t.replace(/^(?:what(?:'s| is)? (?:happening|going on|new)\s+(?:with|in|on|about)?\s*)/i, "").trim();
   t = t.replace(/[?!.]+$/g, "").trim();
   t = t
@@ -96,6 +101,8 @@ export function extractTopic(text: string): string | null {
     .replace(/\s+/g, " ")
     .trim();
   t = t.replace(/^(?:the|a|an)\s+/i, "").trim();
+  // A trailing "headlines" or "news" is the request, not the subject ("technology headlines").
+  t = t.replace(/\s+(?:news|headlines?|coverage|stories|updates?)$/i, "").trim();
   t = t.replace(/[,;:]+$/g, "").trim();
   return t.length >= 2 ? t : null;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arxivFromExcerpt, carriedArticles, cleanNote, cleanTitle, fallbackData, genericNews, READERS, readerFor, splitAuthors, titlesFromProse } from "@/lib/adapters";
+import { articlesFromProse, arxivFromExcerpt, carriedArticles, cleanNote, cleanTitle, fallbackData, genericNews, READERS, readerFor, splitAuthors, titlesFromProse } from "@/lib/adapters";
 
 const ARXIV_EXCERPT =
   "Skip to main content Search Submit Donate Log in Search arXiv Press Enter to search &middot; Advanced search -- Computer Science Computation and Language arXiv:1706.03762 (cs) [Submitted on 12 Jun 2017 ( v1 ), last revised 2 Aug 2023 (this version, v7)] Title: Attention Is All You Need Authors: Ashish Vaswani , Noam Shazeer , Niki Parmar , Jakob Uszkoreit View a PDF of the paper titled Attention Is All You Need, by Ashish Vaswani";
@@ -69,6 +69,24 @@ describe("news readers", () => {
     expect(genericNews({ results: [{ headline: "H", source: { name: "N" }, link: "l", date: "2026-09-01" }] }, {}).data).toMatchObject({ articles: [{ title: "H", source: "N", url: "l", published: "2026-09-01" }] });
     expect(genericNews({ summary: "Nothing matched." }, {}).data).toEqual({ articles: [], answer: "Nothing matched." });
     expect(genericNews({ articles: [] }, {}).unusable).toBeTruthy();
+  });
+  it("livecert's news search answers in prose; the quoted titles become articles", () => {
+    const reason = 'Recent coverage of AI regulation in India from the last 7 days includes: "India\'s technology sector calls for fairness in global tax and AI regulations" (Traders Union, 11 September 2026); "Video | India vs AI: The Big Battle" (NDTV Profit, 9 September 2026); "Urgent Call for AI Regulation Amid Extinction Fears" (Devdiscourse). 3 articles, most recent first.';
+    const p = READERS.NEWS_SEARCH!.livecert!({ confidence: 0.9, reason, verdict: "articles" }, {});
+    expect(p.unusable).toBeUndefined();
+    expect(p.data).toMatchObject({
+      articles: [
+        { title: "India's technology sector calls for fairness in global tax and AI regulations", source: "Traders Union", published: "11 September 2026" },
+        { title: "Video | India vs AI: The Big Battle", source: "NDTV Profit", published: "9 September 2026" },
+        { title: "Urgent Call for AI Regulation Amid Extinction Fears", source: "Devdiscourse", published: null },
+      ],
+    });
+    expect(p.label).toBe("3 articles");
+    expect(READERS.NEWS_SEARCH!.livecert!({ confidence: 0.9, reason: "No coverage of that subject was published in the last 30 days.", verdict: "none" }, {}).unusable).toMatch(/No coverage/);
+    expect(articlesFromProse("“Curly quoted title here” (Reuters, 2026-09-01) and 'no' \"short\"")).toEqual([{ title: "Curly quoted title here", source: "Reuters", url: null, published: "2026-09-01", description: null }]);
+    // The generic reader reads the same prose under reason, and names an empty answer for what it is.
+    expect((genericNews({ reason, verdict: "articles" }, {}).data as { articles: Array<{ title: string }> }).articles[1]?.title).toBe("Video | India vs AI: The Big Battle");
+    expect(genericNews({ reason: "A news index that does not respond: the index could not be queried." }, {}).unusable).toBeTruthy();
   });
   it("carried articles read both shapes, drop the feed's leftovers and the duplicates", () => {
     const got = carriedArticles({

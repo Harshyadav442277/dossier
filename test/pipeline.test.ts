@@ -63,7 +63,27 @@ describe("inputs", () => {
     const d = await deriveInput(spec("translate"), parsed, ctx);
     expect("queries" in d && d.queries[0]).toMatch(/^Translate "The dominant .* into Hindi.$/);
     expect("queries" in d && d.queries[1]).toMatch(/(hi)/);
+    // Two wordings for a translator, two for a language model; the text stays under MyMemory's 500.
+    expect("queries" in d ? d.queries.length : 0).toBe(4);
+    expect("queries" in d && d.queries[2]).toMatch(/^Rewrite the following passage in Hindi, translating it faithfully/);
+    expect("input" in d && d.input.text!.length).toBeLessThanOrEqual(480);
+    expect(spec("translate").accept).toEqual(expect.arrayContaining(["LANGUAGE_TRANSLATION", "CHAT_COMPLETION", "TEXT_GENERATION"]));
     expect(clipSentences("One. Two. Three.", 9)).toEqual({ text: "One. Two.", truncated: true });
+  });
+  it("gives the steps the router misroutes four wordings, and keeps synthesis out of the writing intents", async () => {
+    for (const id of ["extract", "authorship"]) {
+      const d = await deriveInput(spec(id), parsed, ctx);
+      expect("queries" in d ? d.queries.length : 0).toBe(4);
+    }
+    expect((await deriveInput(spec("authorship"), parsed, ctx) as { queries: string[] }).queries[2]).toMatch(/^Here's a paragraph: "The dominant/);
+    expect(spec("extract").strict).toBe(true);
+    // The steps that write from the text they are given never take a synthesis of the topic;
+    // the two scholarly-search steps (provenance, related) still may.
+    for (const s of [...RESEARCH_STEPS, ...NEWS_STEPS].filter((s) => s.strict)) expect(s.accept).not.toContain("RESEARCH_SYNTHESIS");
+    for (const id of ["brief", "summary"]) expect([...RESEARCH_STEPS, ...NEWS_STEPS].find((s) => s.id === id)!.accept).toContain("TASK_COMPLETION");
+    const news = parseQuery("news", "AI regulation in India");
+    expect((await deriveInput(NEWS_STEPS[0]!, news, {}) as { queries: string[] }).queries.length).toBe(4);
+    expect((await deriveInput(NEWS_STEPS[1]!, news, {}) as { queries: string[] }).queries.length).toBe(4);
   });
   it("words the briefing as a rewriting task from notes, never as a search, whichever shape the notes arrived in", async () => {
     const news = parseQuery("news", "China Top headlines and news in Hindi");

@@ -4,6 +4,14 @@ Read before trusting a claim. Newest first within each state.
 
 ## Open
 
+### G28 · What the network still does on its own, 2026-09-09 to 09-11
+Over 162 production rows: 13 picks the node refused as unroutable (nine of them one miner off
+the AI_TEXT_DETECTION leaderboard, elcaro-ipi-detection, for both detection wordings), seven
+60-second gateway 504s, seven fallbacks to a page reader for a text question (read as unusable
+since G25), one router JSON fault, one Cloudflare challenge in front of a fraud miner. Each
+costs nothing or one cent and is named on the step. The four wordings per misrouted step are
+the only lever the app has.
+
 ### G23 · The node refuses the miner its own router picked
 "routing failed: miner X is not currently routable for intent Y" is a 500 from the node after
 its router has classified the question and named a miner; nothing is charged (confirmed on
@@ -131,6 +139,28 @@ dossier. The MCP endpoint has been exercised end to end (initialize, tools/list,
 `dossier_safety` call) locally.
 
 ## Closed
+
+### G26 · Twenty-seven paid news answers read as empty — CLOSED 2026-09-12
+livecert is now #2 for NEWS_SEARCH and answers `/news-search` in prose: `"Title" (Publisher,
+11 September 2026); …` under `reason`, verdict `articles`, no array. The generic reader looked
+only for arrays and declared "no articles came back", three paid asks per dossier, for every
+news dossier from 2026-09-09 to 09-11 (27 rows, $0.27, each dossier's Recent coverage step shown
+as failed). A reader now parses the quoted titles, the generic reader reads `reason` and prose
+too, and an empty prose answer is named for what it says. One paid probe on 2026-09-12 confirmed
+the shape (five articles, all read).
+
+### G27 · Translation: missing pairs and a 500-character limit — CLOSED 2026-09-12
+langwire (Apertium, #2) has no Ukrainian, Russian or Urdu and was picked three paid times in a
+row for each (the third ask reused the first wording, which draws the same miner); the two
+MyMemory translators refuse text over 500 characters (two paid asks). Now: the text is cut at
+480 characters, a third paid ask needs a wording not yet sent, and wordings three and four are
+writing tasks for a language model, which the step accepts (routed as CHAT_COMPLETION or
+TEXT_GENERATION, shown as such).
+
+### G29 · Topics with the question left in — CLOSED 2026-09-12
+"What's happening in South-America" became the topic "happening in South-America"; "Top
+technology headlines" kept "headlines"; quotes stayed in. Six dossiers on 2026-09-11 searched
+for those strings and found nothing. The parser now strips them.
 
 ### G24 · The briefing was filed as a news search, and read an empty list — CLOSED 2026-09-08 08:40 UTC
 Every news briefing from 2026-09-07 17:10 UTC on ended as *off-target*: both wordings, with

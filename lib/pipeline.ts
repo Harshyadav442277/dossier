@@ -19,12 +19,17 @@ import { safetyVerdict } from "./verdict";
  * one before was refused for free, came back unusable, or was filed under an intent the step
  * cannot use.
  */
-const WRITING = ["CHAT_COMPLETION", "TEXT_GENERATION", "LANGUAGE_GENERATION", "RESEARCH_SYNTHESIS"];
+// The intents whose miners write from the text they are given. TASK_COMPLETION is the same
+// Bedrock chat models filed differently (two paid briefings went there, 2026-09-10/11).
+// RESEARCH_SYNTHESIS is not here: its leader writes about the topic from Wikipedia and OpenAlex
+// and ignores the notes, so a briefing "from the notes only" cannot come from it.
+const WRITING = ["CHAT_COMPLETION", "TEXT_GENERATION", "LANGUAGE_GENERATION", "TASK_COMPLETION"];
 
 export const RESEARCH_STEPS: StepSpec[] = [
   // The router has filed this under CONTENT_EXTRACTION in its reasoning and then handed it to a
   // chat miner, whose extraction was good (2026-09-06); both are accepted and the receipt says which.
-  { id: "extract", title: "Key facts from the abstract", intent: "CONTENT_EXTRACTION", accept: ["CONTENT_EXTRACTION", ...WRITING], needs: [], blurb: "Dates, quantities, named entities and events, pulled from the abstract by the miner the router picks." },
+  // Strict since 2026-09-12: an off-target answer (a CVE lookup, an academic search) carries no facts.
+  { id: "extract", title: "Key facts from the abstract", intent: "CONTENT_EXTRACTION", accept: ["CONTENT_EXTRACTION", ...WRITING], strict: true, needs: [], blurb: "Dates, quantities, named entities and events, pulled from the abstract by the miner the router picks." },
   { id: "summary", title: "Plain-words summary", intent: "CHAT_COMPLETION", accept: WRITING, strict: true, needs: [], blurb: "What the paper claims and why it matters, in three sentences a non-specialist can follow." },
   { id: "authorship", title: "AI-text detection", intent: "AI_TEXT_DETECTION", accept: ["AI_TEXT_DETECTION", "TEXT_AUTHENTICITY_CHECK"], strict: true, needs: [], blurb: "Was the abstract written by a person or a model?" },
   { id: "fraud", title: "Fraud and retraction record", intent: "FRAUD_DETECTION", accept: ["FRAUD_DETECTION"], strict: true, needs: [], blurb: "Any documented misconduct, retraction, paper mill or predatory venue." },
@@ -38,14 +43,16 @@ export const RESEARCH_STEPS: StepSpec[] = [
     blurb: "Does this paper exist as described? The router decides which intent answers that.",
   },
   { id: "related", title: "Related scholarship", intent: "ACADEMIC_SEARCH", accept: ["ACADEMIC_SEARCH", "RESEARCH_QUERY", "RESEARCH_SYNTHESIS"], needs: [], blurb: "Peer-reviewed work on the same subject." },
-  { id: "translate", title: "Translate the abstract", intent: "LANGUAGE_TRANSLATION", accept: ["LANGUAGE_TRANSLATION"], strict: true, needs: [], optional: true, blurb: "The abstract in the language you asked for." },
+  // A writing miner translating on request is accepted: the #2 and #3 translators lack Ukrainian,
+  // Russian and Urdu and the third and fourth wordings are shaped for a language model.
+  { id: "translate", title: "Translate the abstract", intent: "LANGUAGE_TRANSLATION", accept: ["LANGUAGE_TRANSLATION", ...WRITING], strict: true, needs: [], optional: true, blurb: "The abstract in the language you asked for." },
 ];
 
 export const NEWS_STEPS: StepSpec[] = [
   { id: "headlines", title: "Today's headlines", intent: "NEWS_HEADLINES", accept: ["NEWS_HEADLINES", "NEWS_SEARCH"], needs: [], blurb: "The top headlines right now, region-aware." },
   { id: "search", title: "Recent coverage", intent: "NEWS_SEARCH", accept: ["NEWS_SEARCH", "NEWS_HEADLINES", "WEB_SEARCH"], needs: [], blurb: "The last week's articles on the topic." },
   { id: "brief", title: "Briefing", intent: "CHAT_COMPLETION", accept: WRITING, strict: true, needs: ["headlines", "search"], blurb: "A model writes the briefing from the material above and nothing else." },
-  { id: "translate", title: "Translate the briefing", intent: "LANGUAGE_TRANSLATION", accept: ["LANGUAGE_TRANSLATION"], strict: true, needs: ["brief"], optional: true, blurb: "The briefing in the language you asked for." },
+  { id: "translate", title: "Translate the briefing", intent: "LANGUAGE_TRANSLATION", accept: ["LANGUAGE_TRANSLATION", ...WRITING], strict: true, needs: ["brief"], optional: true, blurb: "The briefing in the language you asked for." },
 ];
 
 export const SAFETY_STEPS: StepSpec[] = [
@@ -216,7 +223,12 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
         // The second wording follows the router's own CONTENT_EXTRACTION example ("Here's a receipt
         // (as text): '…', extract …"); an abstract on its own reads as academic and was filed under
         // ACADEMIC_SEARCH or RESEARCH_QUERY four times (2026-09-06/07).
-        queries: [`Extract the dates, quantities, named entities and events from: ${text}`, `Here is a passage (as text): "${text.replace(/"/g, "'")}". Extract the dates, quantities, named entities and events from it as structured fields.`],
+        queries: [
+          `Extract the dates, quantities, named entities and events from: ${text}`,
+          `Here is a passage (as text): "${text.replace(/"/g, "'")}". Extract the dates, quantities, named entities and events from it as structured fields.`,
+          `From the text below, pull out every date, quantity, named entity and event as structured fields. Text: ${text}`,
+          `Extract the key facts as fields, the numbers, the names, the dates and the events, from this text: ${text}`,
+        ],
       };
     }
     case "summary": {
@@ -239,7 +251,14 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       const text = prose.slice(0, 4000);
       return {
         input: { text },
-        queries: [`Was the following passage written by an AI or by a human? Passage: ${text}`, `AI text detection: classify this passage as ai_generated or human_written. ${text}`],
+        // Four wordings: the router named a miner off the leaderboard (elcaro-ipi-detection) that
+        // the node then refused, nine times over two days, for both of the first two.
+        queries: [
+          `Was the following passage written by an AI or by a human? Passage: ${text}`,
+          `AI text detection: classify this passage as ai_generated or human_written. ${text}`,
+          `Here's a paragraph: "${text.replace(/"/g, "'")}". Was this written by an AI or a human?`,
+          `Detect whether this text is AI-generated or human-written, and say how confident you are: ${text}`,
+        ],
       };
     }
     case "fraud": {
@@ -289,12 +308,21 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       const headlines = [...new Set(titles)].slice(0, 12).join(". ");
       const source = parsed.mode === "research" ? proseOf(meta) : brief ? proseForTranslation(brief) : headlines || null;
       if (!source) return { skip: "There is no text to translate yet." };
-      const text = clipSentences(source, 700).text.replace(/"/g, "'");
+      // 480 characters: the MyMemory translators refuse anything over 500 ("QUERY LENGTH LIMIT
+      // EXCEEDED", two paid asks on 2026-09-11) and the router may pick them for any language.
+      const text = clipSentences(source, 480).text.replace(/"/g, "'");
       const lang = parsed.language;
-      // Quoted first: the #1 translator reads the text from the quotes and answered "no text supplied" to the bare form.
+      // Quoted first: the #1 translator reads the text from the quotes and answered "no text
+      // supplied" to the bare form. The third and fourth wordings are writing tasks for a
+      // language model, for when the router keeps picking a translator without the pair.
       return {
         input: { text, language: lang, title: title ?? undefined },
-        queries: [`Translate "${text}" into ${lang.name}.`, `Translate the following text into ${lang.name} (${lang.code}): "${text}"`],
+        queries: [
+          `Translate "${text}" into ${lang.name}.`,
+          `Translate the following text into ${lang.name} (${lang.code}): "${text}"`,
+          `Rewrite the following passage in ${lang.name}, translating it faithfully sentence by sentence and adding nothing. Reply with the ${lang.name} text only. Passage: "${text}"`,
+          `Write this in ${lang.name}, keeping the meaning exactly: "${text}"`,
+        ],
       };
     }
     case "headlines": {
@@ -302,14 +330,24 @@ export async function deriveInput(spec: StepSpec, parsed: ParsedQuery, context: 
       const section = parsed.category ?? topic;
       return {
         input: { topic, category: parsed.category, region: parsed.region },
-        queries: [`What are the top news headlines about ${topic}${where} today?`, `Top ${section} headlines${where} right now, as a list.`],
+        queries: [
+          `What are the top news headlines about ${topic}${where} today?`,
+          `Top ${section} headlines${where} right now, as a list.`,
+          `Give me today's top headlines on ${topic}${where}, as a headline list.`,
+          `Current news headlines for ${topic}${where}: the leading stories right now.`,
+        ],
       };
     }
     case "search": {
       const topic = parsed.topic ?? "";
       return {
         input: { topic, region: parsed.region },
-        queries: [`Find recent news articles from the last 7 days about ${topic}${where}.`, `Search the news for this week's coverage of ${topic}${where}.`],
+        queries: [
+          `Find recent news articles from the last 7 days about ${topic}${where}.`,
+          `Search the news for this week's coverage of ${topic}${where}.`,
+          `What news articles have been published about ${topic}${where} in the past week? List each with its publisher and date.`,
+          `Find articles covering ${topic}${where} from the last few days.`,
+        ],
       };
     }
     case "brief": {
@@ -637,9 +675,10 @@ export async function runStep(spec: StepSpec, parsed: ParsedQuery, context: Cont
   // inside the step's time window: the node refused four picks in a row for one briefing
   // (2026-09-08), and each refusal costs nothing but about nine seconds.
   const MAX_ASKS = 6;
-  // Two paid asks, or three when both answers so far were unusable (the same translator without
-  // the language pair can be picked twice in a row; a third ask usually lands elsewhere).
-  const paidCap = () => (attempts.length >= 2 && attempts.slice(-2).every((a) => a.outcome === "unusable") ? 3 : 2);
+  // Two paid asks, or three when both answers so far were unusable and a wording not yet sent
+  // remains: the router's pick for one wording barely varies, so a third ask in words already
+  // sent went back to the same translator without the pair, three paid times over (2026-09-10).
+  const paidCap = () => (attempts.length >= 2 && attempts.slice(-2).every((a) => a.outcome === "unusable") && asks < derived.queries.length ? 3 : 2);
   let asks = 0;
   let paid = 0;
   // A step must answer inside one function invocation (180 s): no new ask starts after 75 s,

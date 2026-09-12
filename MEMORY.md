@@ -65,6 +65,31 @@ Read first every session. Keep it short: decisions and why, lessons and what the
 - Two unit tests caught my own helpers: the numbered-title regex ran across a quoted title, and
   the claim picker preferred "we propose" over "experiments show". Ten minutes each.
 
+## 2026-09-12 — "I still get errors sometimes"
+
+**What the ledger said (162 rows, 09-09 to 09-11).** 81 ok, 57 unusable, 24 error. The
+unusable ones were mostly the app's: 27 livecert news-search answers in prose read as empty
+(G26), 12 translations to a miner without the pair or over its length limit (G27), 6 empty
+headline lists for topics the parser had mangled (G29). The errors were the network's (G28).
+
+**Decisions**
+- Read prose answers: a reader that parses `"Title" (Publisher, date)`; the generic news reader
+  reads `reason` and prose too.
+- A third paid ask only with a fresh wording. Four wordings for headlines, search, translate,
+  detection and extraction.
+- Translation cut at 480 characters; the step accepts a language model's translation, worded
+  as a writing task in wordings three and four.
+- WRITING = CHAT_COMPLETION, TEXT_GENERATION, LANGUAGE_GENERATION, TASK_COMPLETION.
+  RESEARCH_SYNTHESIS out: its leader ignores the notes. Extraction is strict.
+
+**Lessons**
+- "Unusable" in the ledger is a claim about the reader as much as the miner. Twenty-seven rows
+  said "no articles came back"; the miner had listed five each time. Read a raw result before
+  believing a reader.
+- Leaderboards move: livecert took #1 or #2 on five intents in four days and added endpoints.
+  Re-check `/api/miners?intent=` when a step's miner changes.
+- The parser's topic is what every question is built from; a bad topic fails four steps.
+
 ## 2026-09-08 — After the deadline: the briefing
 
 **The report.** "Many recent calls fail; the errors come from passing one miner's result into
